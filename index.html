@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>East Central MS - S.O.A.R. Student Recognition System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+    <!-- Main Navigation Bar -->
+    <header class="app-header">
+        <div class="header-container">
+            <div class="brand-section">
+                <div class="cardinal-logo">
+                    <svg viewBox="0 0 100 100" width="44" height="44" fill="none">
+                        <circle cx="50" cy="50" r="46" fill="#8B0000"/>
+                        <path d="M25 40 L65 15 L85 45 L65 75 L35 75 L20 55 Z" fill="#DC143C"/>
+                        <path d="M65 45 L92 48 L75 60 Z" fill="#FFB703"/>
+                        <circle cx="65" cy="38" r="4" fill="#FFFFFF"/>
+                        <circle cx="66" cy="38" r="2" fill="#000000"/>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>East Central MS</h1>
+                    <span class="sub-brand">S.O.A.R. Student Recognition System</span>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="nav-tabs" role="tablist">
+                <button class="nav-btn active" data-tab="tab-nominate" role="tab">
+                    <span class="icon">📝</span> Nominate Student
+                </button>
+                <button class="nav-btn" data-tab="tab-matrix" role="tab">
+                    <span class="icon">📋</span> SOAR Matrix
+                </button>
+                <button class="nav-btn teacher-portal-btn" data-tab="tab-teacher" role="tab">
+                    <span class="icon">🍎</span> Teacher Portal 🔒
+                </button>
+                <button class="nav-btn admin-portal-btn" data-tab="tab-admin" role="tab">
+                    <span class="icon">🛡️</span> Dean & Admin Portal 🔒
+                    <span class="badge pending-count-badge" id="pendingBadge">0</span>
+                </button>
+            </nav>
+
+            <div class="header-controls">
+                <button id="sessionLockStatusBtn" class="lock-status-btn locked" title="Portal Lock Status">
+                    🔒 <span id="lockStatusText">Portals Protected</span>
+                </button>
+                <button id="langToggleBtn" class="lang-toggle-btn" title="Toggle English / Spanish Matrix">
+                    <span class="flag-icon">🌐</span> <span id="currentLangLabel">English</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+
+        <!-- ==================== PUBLIC TAB 1: NOMINATION FORM ==================== -->
+        <section id="tab-nominate" class="tab-panel active">
+            <div class="portal-hero">
+                <div class="hero-tag">🌟 East Central Middle School S.O.A.R. Program</div>
+                <h2>Nominate a Student for Demonstrating S.O.A.R.</h2>
+                <p>Select a location below to explore the <strong>East Central MS SOAR Expectations</strong> and pick the specific skill demonstrated.</p>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-card">
+                    <form id="nominationForm">
+                        
+                        <!-- Step 1: Basic Info -->
+                        <div class="section-divider-title">
+                            <span class="step-num">1</span> Basic Information
+                        </div>
+
+                        <div class="form-row two-col">
+                            <div class="form-group">
+                                <label for="nominatorRole">I am a... <span class="required">*</span></label>
+                                <select id="nominatorRole" required>
+                                    <option value="Teacher / Staff">Teacher / Staff Member</option>
+                                    <option value="Student Peer">Student Peer</option>
+                                    <option value="Admin / Dean">Administrator / Dean</option>
+                                    <option value="Parent / Guest">Other Staff</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="nominatorName">Your Name <span class="required">*</span></label>
+                                <input type="text" id="nominatorName" placeholder="e.g., Ms. Johnson or Alex Rivera" required>
+                            </div>
+                        </div>
+
+                        <div class="form-row two-col">
+                            <div class="form-group">
+                                <label for="studentName">Student Name Being Recognized <span class="required">*</span></label>
+                                <input type="text" id="studentName" placeholder="Full Student Name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="studentGrade">Grade Level <span class="required">*</span></label>
+                                <select id="studentGrade" required>
+                                    <option value="6th Grade">6th Grade</option>
+                                    <option value="7th Grade">7th Grade</option>
+                                    <option value="8th Grade">8th Grade</option>
+                                    <option value="Group / Class">Whole Class / Group</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Location Matrix Selection -->
+                        <div class="section-divider-title">
+                            <span class="step-num">2</span> Select Location & SOAR Expectation
+                        </div>
+
+                        <div class="form-group">
+                            <label for="locationCategory">Select Location Where Behavior Occurred: <span class="required">*</span></label>
+                            <div class="location-btn-grid" id="locationBtnGrid">
+                                <button type="button" class="location-chip-btn active" data-location="Classroom">🏫 Classroom</button>
+                                <button type="button" class="location-chip-btn" data-location="Hallway">🚶 Hallway</button>
+                                <button type="button" class="location-chip-btn" data-location="Cafeteria">🍕 Cafeteria</button>
+                                <button type="button" class="location-chip-btn" data-location="Bathroom">🚻 Bathroom</button>
+                                <button type="button" class="location-chip-btn" data-location="Office">💼 Office</button>
+                                <button type="button" class="location-chip-btn" data-location="Stairwell">🪜 Stairwell</button>
+                                <button type="button" class="location-chip-btn" data-location="Assemblies">🎭 Assemblies</button>
+                                <button type="button" class="location-chip-btn" data-location="Technology">💻 Technology</button>
+                            </div>
+                            <input type="hidden" id="locationCategory" value="Classroom">
+                        </div>
+
+                        <!-- Interactive SOAR Matrix Card -->
+                        <div class="interactive-matrix-card" id="interactiveMatrixCard">
+                            <div class="matrix-card-header">
+                                <h3 id="interactiveLocationTitle">📍 Classroom SOAR Expectations</h3>
+                                <p>Click any specific behavior button below to attach it to your nomination:</p>
+                            </div>
+
+                            <div class="soar-pillars-interactive-grid" id="soarPillarsInteractiveGrid">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <input type="hidden" id="soarPillar" value="S">
+                        <input type="hidden" id="selectedExpectationText" value="">
+
+                        <!-- Step 3: Specific Story & Impact -->
+                        <div class="section-divider-title" style="margin-top:1.5rem;">
+                            <span class="step-num">3</span> Specific Story & Positive Impact
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nominationReason">
+                                Describe What Happened & Why It Matters <span class="required">*</span>
+                                <span class="label-help">(Provide specific context so the Dean can approve it for presentation slides)</span>
+                            </label>
+                            <textarea id="nominationReason" rows="4" placeholder="Example: During group project time, Marcus noticed a classmate was struggling. He stepped up, explained the steps patiently, and helped them finish on time." required></textarea>
+                            
+                            <div id="alignmentFeedback" class="alignment-box quality-neutral">
+                                <div class="alignment-header">
+                                    <span class="alignment-icon">🤖</span>
+                                    <span class="alignment-title">SOAR Alignment Checker</span>
+                                    <span id="alignmentBadge" class="quality-tag">Waiting for input...</span>
+                                </div>
+                                <p id="alignmentText" class="alignment-msg">Select a location and SOAR expectation button above, then add specific details of what the student did.</p>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                🚀 Submit SOAR Nomination
+                            </button>
+                            <button type="button" id="fillSampleBtn" class="btn btn-ghost">
+                                💡 Auto-Fill Example
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Educational SOAR Guide Sidebar -->
+                <div class="sidebar-card">
+                    <h3>🦅 What is S.O.A.R.?</h3>
+                    <p style="font-size:0.85rem; color:var(--slate-600); margin-bottom:1rem;">
+                        At East Central Middle School, Cardinals S.O.A.R. by demonstrating these four core values everywhere on campus:
+                    </p>
+
+                    <div class="pillar-quick-cards">
+                        <div class="p-card s-card">
+                            <span class="p-letter">S</span>
+                            <div>
+                                <strong>Show Respect</strong>
+                                <small>Treat others, materials, and settings with care and appropriate voice levels.</small>
+                            </div>
+                        </div>
+                        <div class="p-card o-card">
+                            <span class="p-letter">O</span>
+                            <div>
+                                <strong>Own Your Learning & Behavior</strong>
+                                <small>Take responsibility, give personal best, and come prepared.</small>
+                            </div>
+                        </div>
+                        <div class="p-card a-card">
+                            <span class="p-letter">A</span>
+                            <div>
+                                <strong>Act with Integrity</strong>
+                                <small>Do the right thing even when no one is watching; help others and be honest.</small>
+                            </div>
+                        </div>
+                        <div class="p-card r-card">
+                            <span class="p-letter">R</span>
+                            <div>
+                                <strong>Rise Above Conflict</strong>
+                                <small>Make peaceful choices, walk away from drama, and accept consequences politely.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="qr-poster-preview" style="margin-top:1.5rem;">
+                        <h4>📱 Classroom Poster</h4>
+                        <p>Print the SOAR QR flyer for classroom doors:</p>
+                        <div class="qr-box">
+                            <svg viewBox="0 0 100 100" width="80" height="80">
+                                <rect width="100" height="100" fill="#FFFFFF"/>
+                                <path d="M10 10 H40 V40 H10 Z M20 20 H30 V30 H20 Z" fill="#0F172A"/>
+                                <path d="M60 10 H90 V40 H60 Z M70 20 H80 V30 H70 Z" fill="#0F172A"/>
+                                <path d="M10 60 H40 V90 H10 Z M20 70 H30 V80 H20 Z" fill="#0F172A"/>
+                                <path d="M50 50 H60 V60 H50 Z M70 50 H90 V60 H70 Z M50 70 H70 V90 H50 Z M80 80 H90 V90 H80 Z" fill="#8B0000"/>
+                            </svg>
+                            <span class="qr-label">Scan to Nominate a Cardinal!</span>
+                        </div>
+                        <button id="printPosterBtn" class="btn btn-ghost btn-sm" style="width:100%; margin-top:0.75rem;">
+                            🖨️ Print QR Poster
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== PUBLIC TAB 2: SOAR MATRIX REFERENCE ==================== -->
+        <section id="tab-matrix" class="tab-panel">
+            <div class="matrix-header">
+                <div>
+                    <h2 id="matrixTitle">East Central MS S.O.A.R. Matrix</h2>
+                    <p id="matrixSubtitle">Behavioral Expectations across all school settings</p>
+                </div>
+                <button id="matrixLangBtn" class="btn btn-ghost">
+                    🌐 Switch Matrix Language (ES/EN)
+                </button>
+            </div>
+
+            <div class="matrix-table-wrapper">
+                <table class="soar-matrix-table" id="soarMatrixTable">
+                    <!-- Matrix -->
+                </table>
+            </div>
+        </section>
+
+        <!-- ==================== PROTECTED TAB 3: TEACHER PORTAL ==================== -->
+        <section id="tab-teacher" class="tab-panel">
+            
+            <div id="teacherLockScreen" class="lock-screen-box">
+                <div class="lock-icon-circle" style="background:#FFF3C4; color:#D97706;">🍎🔒</div>
+                <h2>Teacher Express Portal Access Control</h2>
+                <p>This section is restricted to East Central MS Teachers & Faculty to access 10-Second Quick Nominations and Whole Class Batch Recognitions.</p>
+                
+                <form id="teacherPasscodeForm" class="lock-form">
+                    <div class="form-group">
+                        <label for="teacherPasscodeInput">Enter Staff / Teacher Passcode:</label>
+                        <input type="password" id="teacherPasscodeInput" placeholder="Enter Staff Passcode (Default: CARDINALS)" required autocomplete="current-password">
+                        <span class="passcode-hint">Default Staff Passcode: <strong>CARDINALS</strong></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" style="width:100%; background:#D97706;">
+                        🔓 Unlock Teacher Portal
+                    </button>
+                    <div id="teacherPasscodeError" class="passcode-error-msg">❌ Incorrect passcode. Please try again.</div>
+                </form>
+            </div>
+
+            <!-- Protected Teacher Content -->
+            <div id="teacherMainContent" class="protected-content-hidden">
+                <div class="admin-header">
+                    <div>
+                        <h2>🍎 Teacher Express Productivity Hub</h2>
+                        <p>High-speed nomination tools built specifically for teachers and classroom instruction.</p>
+                    </div>
+                    <button id="lockTeacherNowBtn" class="btn btn-ghost" style="border-color:#EF4444; color:#EF4444;">
+                        🔒 Lock Teacher Session
+                    </button>
+                </div>
+
+                <div class="admin-subnav-bar">
+                    <button class="teacher-subtab-btn active" id="tsubtabQuickBtn">⚡ 10-Second Quick Add</button>
+                    <button class="teacher-subtab-btn" id="tsubtabClassBtn">👥 Whole Class / Group Add</button>
+                </div>
+
+                <!-- Teacher Subpanel 1: 10-Second Quick Add -->
+                <div id="teacherSubpanelQuick" class="teacher-subpanel active">
+                    <div class="form-card" style="max-width:800px; margin:0 auto;">
+                        <h3 style="margin-bottom:0.5rem;">⚡ 10-Second Express Student Nomination</h3>
+                        <p style="font-size:0.875rem; color:var(--slate-600); margin-bottom:1.5rem;">Pick a student, tap a location, and click a SOAR skill to instant-submit!</p>
+
+                        <form id="quickAddForm">
+                            <div class="form-row two-col">
+                                <div class="form-group">
+                                    <label>Teacher Name:</label>
+                                    <input type="text" id="quickTeacherName" placeholder="e.g., Ms. Johnson" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Student Name:</label>
+                                    <input type="text" id="quickStudentName" placeholder="Full Student Name" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row two-col">
+                                <div class="form-group">
+                                    <label>Grade Level:</label>
+                                    <select id="quickStudentGrade">
+                                        <option value="6th Grade">6th Grade</option>
+                                        <option value="7th Grade">7th Grade</option>
+                                        <option value="8th Grade">8th Grade</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Location Observed:</label>
+                                    <select id="quickLocation">
+                                        <option value="Classroom">Classroom</option>
+                                        <option value="Hallway">Hallway</option>
+                                        <option value="Cafeteria">Cafeteria</option>
+                                        <option value="Bathroom">Bathroom</option>
+                                        <option value="Office">Office</option>
+                                        <option value="Stairwell">Stairwell</option>
+                                        <option value="Assemblies">Assemblies</option>
+                                        <option value="Technology">Technology</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Click 1 Specific SOAR Skill Demonstrated:</label>
+                                <div id="quickSkillChipsGrid" class="chip-container" style="gap:0.6rem;">
+                                    <!-- Populated dynamically -->
+                                </div>
+                                <input type="hidden" id="quickSelectedPillar" value="S">
+                                <input type="hidden" id="quickSelectedSkill" value="" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Quick Note / Context (Optional):</label>
+                                <input type="text" id="quickAddNote" placeholder="e.g. During 3rd period lab time">
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg" style="width:100%; margin-top:1rem;">
+                                ⚡ Instant Submit Nomination
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Teacher Subpanel 2: Whole Class / Group Add -->
+                <div id="teacherSubpanelClass" class="teacher-subpanel">
+                    <div class="form-card" style="max-width:800px; margin:0 auto;">
+                        <h3 style="margin-bottom:0.5rem;">👥 Whole Class or Table Group Batch Recognition</h3>
+                        <p style="font-size:0.875rem; color:var(--slate-600); margin-bottom:1.5rem;">Recognize an entire advisory class, lab table, or group of students simultaneously with 1 click!</p>
+
+                        <form id="classAddForm">
+                            <div class="form-row two-col">
+                                <div class="form-group">
+                                    <label>Teacher Name:</label>
+                                    <input type="text" id="classTeacherName" placeholder="e.g., Mr. Davis" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Class Period / Group Name:</label>
+                                    <input type="text" id="classGroupName" placeholder="e.g., 2nd Period Algebra or Table 3 Lab Group" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Student Names (Comma Separated or Group Title):</label>
+                                <textarea id="classStudentList" rows="3" placeholder="e.g., Alex Rivera, Sam Smith, Jordan Lee, Maria Garcia" required></textarea>
+                                <span class="label-help">If student names are entered separated by commas, individual nominations will be generated for each student!</span>
+                            </div>
+
+                            <div class="form-row two-col">
+                                <div class="form-group">
+                                    <label>Grade Level:</label>
+                                    <select id="classGrade">
+                                        <option value="6th Grade">6th Grade</option>
+                                        <option value="7th Grade">7th Grade</option>
+                                        <option value="8th Grade">8th Grade</option>
+                                        <option value="Multi-Grade Group">Multi-Grade Group</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Location Observed:</label>
+                                    <select id="classLocation">
+                                        <option value="Classroom">Classroom</option>
+                                        <option value="Hallway">Hallway</option>
+                                        <option value="Cafeteria">Cafeteria</option>
+                                        <option value="Assemblies">Assemblies</option>
+                                        <option value="Technology">Technology</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>SOAR Pillar Demonstrated:</label>
+                                <select id="classPillar">
+                                    <option value="S">S - Show Respect</option>
+                                    <option value="O">O - Own Your Learning & Behavior</option>
+                                    <option value="A">A - Act with Integrity</option>
+                                    <option value="R">R - Rise Above Conflict</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Group Achievement Reason:</label>
+                                <textarea id="classReason" rows="3" placeholder="Example: The entire lab table worked together seamlessly, kept their station clean, and helped each other troubleshoot code." required></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg" style="width:100%; background:#0D9488; margin-top:1rem;">
+                                👥 Batch Submit Group Nominations
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== PROTECTED TAB 4: DEAN & ADMIN PORTAL ==================== -->
+        <section id="tab-admin" class="tab-panel">
+            
+            <div id="adminLockScreen" class="lock-screen-box">
+                <div class="lock-icon-circle">🛡️🔒</div>
+                <h2>Dean & Administrator Access Control</h2>
+                <p>Access to the Moderation Queue, Slide Deck Studio, SOAR Bucks Tickets, Parent Message Generators, and Staff Analytics is restricted to authorized school staff.</p>
+                
+                <form id="deanPasscodeForm" class="lock-form">
+                    <div class="form-group">
+                        <label for="deanPasscodeInput">Enter Dean Passcode:</label>
+                        <input type="password" id="deanPasscodeInput" placeholder="Enter Staff Passcode (Default: SOAR2026)" required autocomplete="current-password">
+                        <span class="passcode-hint">Default Passcode: <strong>SOAR2026</strong></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" style="width:100%;">
+                        🔓 Unlock Admin Portal
+                    </button>
+                    <div id="passcodeError" class="passcode-error-msg">❌ Incorrect passcode. Please try again.</div>
+                </form>
+            </div>
+
+            <!-- Protected Admin Portal Content -->
+            <div id="adminMainContent" class="protected-content-hidden">
+                <div class="admin-header">
+                    <div>
+                        <h2>Dean & Administrator Portal</h2>
+                        <p>Approve nominations, present slide decks, print tickets, generate parent messages, and analyze equity metrics.</p>
+                    </div>
+                    <div class="admin-actions-top">
+                        <button id="lockHubNowBtn" class="btn btn-ghost" style="border-color:#EF4444; color:#EF4444;">
+                            🔒 Lock Session
+                        </button>
+                        <button id="changePasscodeBtn" class="btn btn-ghost">
+                            🔑 Change Passcode
+                        </button>
+                        <button id="batchApproveBtn" class="btn btn-secondary">
+                            ✅ Approve Selected
+                        </button>
+                        <button id="exportCsvBtn" class="btn btn-ghost">
+                            📥 Export CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Admin Sub-Navigation Tabs -->
+                <div class="admin-subnav-bar">
+                    <button class="admin-subtab-btn active" id="subtabModBtn">📋 Approval Queue</button>
+                    <button class="admin-subtab-btn" id="subtabSlidesBtn">📺 Slide Deck Studio</button>
+                    <button class="admin-subtab-btn" id="subtabTicketsBtn">🎟️ SOAR Bucks & Tickets</button>
+                    <button class="admin-subtab-btn" id="subtabParentBtn">✉️ Parent Messages</button>
+                    <button class="admin-subtab-btn" id="subtabAnalyticsBtn">📊 Equity & Staff Insights</button>
+                </div>
+
+                <!-- Sub-Panel 1: Moderation Approval Queue -->
+                <div id="adminSubpanelMod" class="admin-subpanel active">
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Status Filter:</label>
+                            <div class="filter-pills">
+                                <button class="filter-pill active" data-filter-status="all">All Submissions</button>
+                                <button class="filter-pill" data-filter-status="Pending">Pending Review</button>
+                                <button class="filter-pill" data-filter-status="Approved">Approved</button>
+                                <button class="filter-pill" data-filter-status="Needs Revision">Unaligned / Low Quality</button>
+                                <button class="filter-pill" data-filter-status="Rejected">Rejected</button>
+                            </div>
+                        </div>
+
+                        <div class="filter-group right">
+                            <input type="text" id="adminSearchInput" placeholder="Search student name, teacher, or keyword..." class="search-input">
+                        </div>
+                    </div>
+
+                    <div class="moderation-container">
+                        <div id="nominationList" class="nomination-cards-grid">
+                            <!-- Dynamic cards -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-Panel 2: Protected Slide Deck Studio -->
+                <div id="adminSubpanelSlides" class="admin-subpanel">
+                    <div class="studio-header">
+                        <div>
+                            <h3>SOAR Recognition Slide Deck Studio</h3>
+                            <p>Generate presentation slides for hallway TVs, morning announcements, and printable assembly certificates.</p>
+                        </div>
+                        <div class="studio-controls">
+                            <select id="slideThemeSelect" class="select-styled">
+                                <option value="cardinal-dark">Cardinal Red Dark Mode</option>
+                                <option value="cardinal-gold">Cardinal Gold & Red</option>
+                                <option value="sleek-white">Sleek Widescreen Light</option>
+                            </select>
+                            <button id="launchSlideshowBtn" class="btn btn-primary">
+                                ▶ Fullscreen Presentation
+                            </button>
+                            <button id="printSlidesBtn" class="btn btn-secondary">
+                                🖨️ Print Slides / PDF
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="slides-workspace">
+                        <div class="slide-nav-sidebar">
+                            <div class="sidebar-title">Approved Slides (<span id="slideCountText">0</span>)</div>
+                            <div id="slideThumbnails" class="thumbnails-list">
+                                <!-- Thumbnails -->
+                            </div>
+                        </div>
+
+                        <div class="slide-stage-container">
+                            <div id="activeSlideStage" class="slide-stage cardinal-dark">
+                                <!-- Active slide -->
+                            </div>
+
+                            <div class="slide-stage-controls">
+                                <button id="prevSlideBtn" class="btn btn-ghost">◀ Previous</button>
+                                <span id="slideIndexIndicator">Slide 1 of 1</span>
+                                <button id="nextSlideBtn" class="btn btn-ghost">Next ▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-Panel 3: REDESIGNED SOAR BUCKS & TICKETS STUDIO -->
+                <div id="adminSubpanelTickets" class="admin-subpanel">
+                    <div class="ticket-studio-toolbar">
+                        <div class="toolbar-left">
+                            <div class="studio-title-group">
+                                <h3>🎟️ Cardinal SOAR Bucks Print Studio</h3>
+                                <p>Custom print-ready reward bucks for student recognition</p>
+                            </div>
+
+                            <!-- Mode Toggle -->
+                            <div class="ticket-mode-toggles">
+                                <button type="button" class="mode-btn active" id="ticketModeStudentsBtn">
+                                    🎓 Approved Students (<span id="approvedTicketCount">0</span>)
+                                </button>
+                                <button type="button" class="mode-btn" id="ticketModeBlankBtn">
+                                    ✂️ Blank Cut-Out Bucks (Classroom Distribution)
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="toolbar-right">
+                            <div class="control-group">
+                                <label for="ticketValueSelect">Point Denomination:</label>
+                                <select id="ticketValueSelect" class="select-styled btn-sm">
+                                    <option value="1 SOAR POINT">1 SOAR Point ($1)</option>
+                                    <option value="5 SOAR POINTS">5 SOAR Points ($5)</option>
+                                    <option value="10 SOAR POINTS">10 SOAR Points ($10)</option>
+                                    <option value="VIP CARDINAL BUCK">VIP Cardinal Pass</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="ticketDensitySelect">Sheet Layout:</label>
+                                <select id="ticketDensitySelect" class="select-styled btn-sm">
+                                    <option value="8">8 Bucks per Page (2x4 Grid)</option>
+                                    <option value="10">10 Bucks per Page (2x5 Grid)</option>
+                                </select>
+                            </div>
+
+                            <button id="printTicketsBtn" class="btn btn-primary btn-lg" style="box-shadow: 0 4px 14px rgba(220, 20, 60, 0.4);">
+                                🖨️ Print SOAR Bucks Sheet
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter & Selection Bar for Individual Student Mode -->
+                    <div id="studentTicketSelectionBar" class="ticket-selection-bar">
+                        <div class="selection-controls">
+                            <button type="button" id="selectAllTicketsBtn" class="btn btn-ghost btn-sm">
+                                ☑️ Select All Approved
+                            </button>
+                            <button type="button" id="deselectAllTicketsBtn" class="btn btn-ghost btn-sm">
+                                ⬜ Deselect All
+                            </button>
+                            <span class="selection-count" id="selectedTicketCountLabel">Selected: 0 tickets</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Print-Ready Sheet Preview -->
+                    <div class="sheet-preview-container">
+                        <div id="ticketsSheetPreview" class="printable-tickets-grid grid-8">
+                            <!-- Populated dynamically with high-res authentic currency tickets -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-Panel 4: Protected Parent Message Center -->
+                <div id="adminSubpanelParent" class="admin-subpanel">
+                    <div class="parent-header">
+                        <div>
+                            <h3>Parent & Guardian Communication Generator</h3>
+                            <p>Automate praise messages for parents in <strong>English</strong> or <strong>Spanish</strong> via Email, SMS, or Printed Recognition Letters.</p>
+                        </div>
+                    </div>
+
+                    <div class="parent-grid">
+                        <div class="parent-list-card">
+                            <h3>Select Approved Student</h3>
+                            <div id="parentStudentList" class="student-select-list">
+                                <!-- Approved list -->
+                            </div>
+                        </div>
+
+                        <div class="parent-preview-card">
+                            <div class="preview-toolbar">
+                                <div class="message-format-toggles">
+                                    <button class="format-btn active" data-format="email">📧 Email Format</button>
+                                    <button class="format-btn" data-format="sms">📱 SMS / Text</button>
+                                    <button class="format-btn" data-format="letter">📜 Formal Letter</button>
+                                </div>
+                                <div class="lang-selector-group">
+                                    <label>Language:</label>
+                                    <select id="parentLangSelect">
+                                        <option value="en">English</option>
+                                        <option value="es">Spanish (Español)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div id="messageOutputContainer" class="message-output-box">
+                                <div class="placeholder-msg">Select an approved nomination on the left to generate parent messages.</div>
+                            </div>
+
+                            <div class="message-actions">
+                                <button id="copyMessageBtn" class="btn btn-secondary">📋 Copy to Clipboard</button>
+                                <button id="printLetterBtn" class="btn btn-ghost">🖨️ Print Letter</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-Panel 5: Protected Equity & Staff Champions Insights -->
+                <div id="adminSubpanelAnalytics" class="admin-subpanel">
+                    <div class="kpi-row">
+                        <div class="kpi-card">
+                            <div class="kpi-value" id="kpiTotal">0</div>
+                            <div class="kpi-label">Total Nominations</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value green" id="kpiApproved">0</div>
+                            <div class="kpi-label">Approved & Celebrated</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value gold" id="kpiApprovalRate">0%</div>
+                            <div class="kpi-label">Alignment Quality Rate</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-value red" id="kpiUniqueStudents">0</div>
+                            <div class="kpi-label">Unique Students Recognized</div>
+                        </div>
+                    </div>
+
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>🏆 Staff SOAR Champions (Top Nominators)</h3>
+                            <div id="staffLeaderboard" class="custom-bar-chart">
+                                <!-- Leaderboard -->
+                            </div>
+                        </div>
+
+                        <div class="chart-card">
+                            <h3>SOAR Pillar Breakdown</h3>
+                            <div id="pillarBarChart" class="custom-bar-chart">
+                                <!-- Bar chart -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="equity-card">
+                        <h3>⚖️ Admin Security & Equity Controls</h3>
+                        <div class="considerations-grid">
+                            <div class="c-item">
+                                <h4>1. Fully Protected Portals</h4>
+                                <p>Teacher quick tools and Dean administrative suites are strictly locked behind separate staff passcodes.</p>
+                            </div>
+                            <div class="c-item">
+                                <h4>2. High Speed Teacher Tools</h4>
+                                <p>Teachers access 10-second Quick Add and Class Batch nominations in their private portal.</p>
+                            </div>
+                            <div class="c-item">
+                                <h4>3. Interactive Expectation Alignment</h4>
+                                <p>Clicking any expectation button attaches the exact SOAR behavior to the nomination story.</p>
+                            </div>
+                            <div class="c-item">
+                                <h4>4. Anti-Bias & Equity Monitoring</h4>
+                                <p>Deans can monitor recognition frequency per grade level to ensure non-classroom settings aren't overlooked.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Modal for Editing Nominations -->
+    <div id="editModal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit & Enhance Nomination</h3>
+                <button class="modal-close" id="closeEditModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editNomId">
+                <div class="form-group">
+                    <label>Student Name:</label>
+                    <input type="text" id="editStudentName" class="input-styled">
+                </div>
+                <div class="form-group">
+                    <label>SOAR Pillar:</label>
+                    <select id="editPillar" class="select-styled">
+                        <option value="S">S - Show Respect</option>
+                        <option value="O">O - Own Your Learning & Behavior</option>
+                        <option value="A">A - Act with Integrity</option>
+                        <option value="R">R - Rise Above Conflict</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Reason / Specific Behavior:</label>
+                    <textarea id="editReason" rows="4" class="textarea-styled"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Dean Moderation Note (Optional):</label>
+                    <input type="text" id="editAdminNote" placeholder="e.g. Cleaned up grammar and added specific location context" class="input-styled">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="saveEditBtn" class="btn btn-primary">Save & Approve</button>
+                <button id="cancelEditBtn" class="btn btn-ghost">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen Presentation Overlay -->
+    <div id="fullscreenSlideshow" class="fullscreen-overlay">
+        <button class="exit-fullscreen-btn" id="exitFullscreenBtn">✕ Exit Presentation</button>
+        <div id="fullscreenSlideContainer" class="fullscreen-slide-stage">
+            <!-- Fullscreen slide -->
+        </div>
+        <div class="fs-nav-overlay">
+            <button id="fsPrevBtn">◀</button>
+            <button id="fsPlayPauseBtn">⏸ Auto Play</button>
+            <button id="fsNextBtn">▶</button>
+        </div>
+    </div>
+
+    <!-- Printable Container -->
+    <div id="printContainer" class="print-only"></div>
+
+    <script src="soar-matrix-data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
