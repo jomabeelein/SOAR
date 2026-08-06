@@ -31,6 +31,7 @@
     --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
 
     --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Cinzel', Georgia, serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -194,6 +195,30 @@ input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:f
     box-shadow: 0 2px 8px rgba(15,23,42,0.25);
 }
 
+/* TEACHER QUICK ADD CATEGORIZED SKILLS GRID */
+.quick-skills-categorized-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;
+}
+
+.quick-skill-btn {
+    background: var(--slate-50); border: 1.5px solid var(--slate-200);
+    color: var(--slate-900); text-align: left; padding: 0.55rem 0.75rem;
+    border-radius: 6px; font-family: inherit; font-size: 0.825rem; font-weight: 600;
+    cursor: pointer; transition: all 0.2s ease; width: 100%; display: block;
+}
+
+.quick-skill-btn:hover { background: var(--cardinal-gold-light); border-color: var(--cardinal-gold); }
+.quick-skill-btn.selected {
+    background: var(--slate-900) !important; color: #FFFFFF !important;
+    border-color: var(--slate-900) !important; box-shadow: 0 4px 10px rgba(15,23,42,0.2);
+}
+
+.quick-skill-selection-indicator {
+    background: #FFF3C4; border: 1px solid #F59E0B; color: #92400E;
+    padding: 0.55rem 0.85rem; border-radius: var(--radius-sm);
+    font-size: 0.85rem; font-weight: 700; margin-top: 0.75rem;
+}
+
 /* Alignment Box */
 .alignment-box { margin-top: 0.75rem; padding: 1rem; border-radius: var(--radius-md); transition: all 0.3s ease; border-left: 4px solid var(--slate-600); }
 .alignment-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.3rem; }
@@ -252,7 +277,7 @@ input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:f
 .admin-subnav-bar {
     display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
     background: #FFFFFF; padding: 0.4rem; border-radius: var(--radius-md);
-    border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm);
+    border: 1px solid var(--slate-200); box-shadow: var(--shadow-sm); flex-wrap: wrap;
 }
 
 .admin-subtab-btn {
@@ -300,6 +325,89 @@ input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:f
 .nom-reason-box { background: var(--slate-50); padding: 0.85rem; border-radius: var(--radius-sm); font-size: 0.9rem; line-height: 1.45; margin-bottom: 1rem; border-left: 3px solid var(--slate-300); }
 .admin-card-actions { display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid var(--slate-200); padding-top: 0.85rem; margin-top: auto; }
 
+/* DUPLICATE / NAME SIMILARITY ALERT BANNER */
+.duplicate-flag-banner {
+    background: #FFFBEB; border: 1.5px solid #F59E0B;
+    border-radius: var(--radius-sm); padding: 0.75rem 1rem;
+    margin-bottom: 0.85rem; font-size: 0.825rem; color: #92400E;
+}
+.duplicate-flag-banner strong { color: #78350F; }
+
+/* TOP 10 STUDENT OF THE MONTH SECTION */
+.sotm-header-card {
+    background: #FFFFFF; padding: 1.5rem 1.75rem; border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md); border: 1px solid var(--slate-200);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+.sotm-title-group h3 { font-size: 1.25rem; font-weight: 800; color: var(--slate-900); }
+.sotm-title-group p { font-size: 0.85rem; color: var(--slate-600); }
+
+.sotm-filter-row { display: flex; align-items: center; gap: 0.6rem; }
+.filter-label-tag { font-size: 0.78rem; font-weight: 800; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.04em; }
+
+.sotm-period-filter-pills, .sotm-grade-filter-pills { display: flex; gap: 0.35rem; }
+.sotm-pill {
+    background: var(--slate-100); border: 1px solid var(--slate-200); color: var(--slate-700);
+    padding: 0.4rem 0.8rem; border-radius: 999px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+}
+.sotm-pill.active { background: var(--slate-900); color: #FFFFFF; border-color: var(--slate-900); box-shadow: 0 2px 6px rgba(15,23,42,0.15); }
+
+.sotm-leaderboard-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 1.25rem;
+}
+
+.sotm-card {
+    background: #FFFFFF; border-radius: var(--radius-lg); border: 1px solid var(--slate-200);
+    padding: 1.25rem; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; justify-content: space-between;
+    position: relative; transition: all 0.2s;
+}
+.sotm-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.sotm-card.rank-1 { border: 2px solid var(--cardinal-gold); background: linear-gradient(180deg, #FFFBEB 0%, #FFFFFF 100%); }
+.sotm-card.awarded { border: 2px solid var(--success-green); background: linear-gradient(180deg, #ECFDF5 0%, #FFFFFF 100%); }
+
+.sotm-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
+.sotm-rank-badge {
+    width: 34px; height: 34px; border-radius: 50%; background: var(--slate-900); color: #FFFFFF;
+    font-weight: 900; font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+}
+.sotm-card.rank-1 .sotm-rank-badge { background: var(--cardinal-gold); color: var(--slate-900); }
+
+.sotm-student-name { font-size: 1.2rem; font-weight: 900; color: var(--slate-900); }
+.sotm-nom-count { background: var(--cardinal-bright); color: #FFFFFF; font-size: 0.75rem; font-weight: 800; padding: 0.2rem 0.6rem; border-radius: 999px; }
+
+.sotm-pillar-counts { display: flex; gap: 0.4rem; margin-bottom: 0.75rem; }
+.pillar-count-chip { font-size: 0.725rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 4px; color: #FFFFFF; }
+
+.sotm-reasons-preview { background: var(--slate-50); border-radius: var(--radius-sm); padding: 0.75rem; font-size: 0.8rem; color: var(--slate-800); margin-bottom: 1rem; max-height: 120px; overflow-y: auto; }
+.sotm-reason-item { margin-bottom: 0.4rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--slate-200); }
+.sotm-reason-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+
+.sotm-cert-actions { display: flex; gap: 0.4rem; margin-top: 0.5rem; }
+
+/* PRINTABLE FORMAL BILINGUAL STUDENT OF THE MONTH CERTIFICATE - CLEAN LANDSCAPE FORMAT */
+.printable-sotm-certificate {
+    width: 100%; aspect-ratio: 11 / 8.5; background: #FFFDF9;
+    border: 12px double #8B0000; outline: 3px solid #FFB703; outline-offset: -8px;
+    padding: 3rem 4rem; box-sizing: border-box; text-align: center;
+    position: relative; font-family: var(--font-serif); color: var(--slate-900);
+    display: flex; flex-direction: column; justify-content: space-between;
+}
+
+.cert-school-name { font-size: 2.2rem; font-weight: 900; color: #8B0000; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.2rem; }
+.cert-award-title { font-size: 1.5rem; font-weight: 800; color: #D97706; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid #FFB703; display: inline-block; padding-bottom: 0.4rem; margin-bottom: 1.75rem; }
+
+.cert-recipient-label { font-family: var(--font-main); font-size: 0.95rem; color: var(--slate-600); text-transform: uppercase; letter-spacing: 0.1em; }
+.cert-recipient-name { font-size: 3.5rem; font-weight: 900; color: #0F172A; text-decoration: underline; text-decoration-color: #FFB703; text-underline-offset: 8px; margin: 0.5rem 0 1rem 0; }
+.cert-grade-tag { font-family: var(--font-main); font-size: 1.1rem; font-weight: 800; color: #8B0000; margin-bottom: 1.5rem; }
+
+.cert-body-text { font-family: var(--font-main); font-size: 1.1rem; line-height: 1.6; color: var(--slate-800); max-width: 88%; margin: 0 auto 1.5rem auto; font-style: italic; }
+
+.cert-footer-row { display: flex; justify-content: space-between; align-items: flex-end; padding-top: 1.5rem; border-top: 1px solid #CBD5E1; font-family: var(--font-main); }
+.cert-sig-box { text-align: center; }
+.cert-sig-line { width: 220px; border-bottom: 2px solid #0F172A; margin-bottom: 0.4rem; }
+.cert-sig-title { font-size: 0.85rem; font-weight: 800; color: var(--slate-700); text-transform: uppercase; }
+
 /* REDESIGNED SOAR BUCKS STUDIO */
 .ticket-studio-toolbar {
     background: #FFFFFF; padding: 1.25rem 1.75rem; border-radius: var(--radius-xl);
@@ -337,14 +445,12 @@ input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:f
     box-shadow: inset 0 2px 8px rgba(0,0,0,0.06); max-height: 800px; overflow-y: auto;
 }
 
-/* Printable Tickets Grid (2 columns x N rows) */
 .printable-tickets-grid {
     display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
     max-width: 960px; margin: 0 auto; background: #FFFFFF; padding: 1.5rem;
     border-radius: var(--radius-md); box-shadow: var(--shadow-lg);
 }
 
-/* High-Res Security Currency SOAR Buck Card */
 .soar-currency-buck {
     background: #FAFAF9; border: 2px dashed #94A3B8;
     border-radius: 10px; padding: 0.85rem; position: relative;
@@ -463,4 +569,5 @@ input[type="text"]:focus, input[type="password"]:focus, select:focus, textarea:f
     .printable-slide { page-break-after: always; aspect-ratio: 16/9; width: 100%; padding: 3rem; box-sizing: border-box; }
     .printable-qr-poster { page-break-after: always; text-align: center; padding: 3rem; }
     .printable-tickets-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; width: 100%; padding: 0; box-shadow: none; }
+    .printable-sotm-certificate { width: 100%; height: 100vh; page-break-after: always; }
 }

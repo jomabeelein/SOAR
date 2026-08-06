@@ -23,8 +23,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let ticketStudioMode = "students"; // "students" or "blank"
     let selectedTicketIds = new Set();
 
+    // Student of the Month Filter State
+    let sotmSelectedGrade = "all";
+    let sotmSelectedMode = "month"; // "month", "quarter", "semester", "year"
+    let awardedSotmStudents = JSON.parse(localStorage.getItem("ecms_soar_sotm_awarded")) || {};
+
     function saveState() {
         localStorage.setItem("ecms_soar_nominations", JSON.stringify(nominations));
+        localStorage.setItem("ecms_soar_sotm_awarded", JSON.stringify(awardedSotmStudents));
         updatePendingBadge();
     }
 
@@ -45,6 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderSlideDeck();
             renderTicketsGrid();
             renderParentCenter();
+            renderSotmLeaderboard();
         } else {
             if (adminLockScreen) adminLockScreen.style.display = "block";
             if (adminMainContent) adminMainContent.className = "protected-content-hidden";
@@ -207,6 +214,7 @@ document.addEventListener("DOMContentLoaded", () => {
             tsubtabClassBtn.classList.remove("active");
             if (teacherSubpanelQuick) teacherSubpanelQuick.classList.add("active");
             if (teacherSubpanelClass) teacherSubpanelClass.classList.remove("active");
+            renderQuickSkillChips();
         });
 
         tsubtabClassBtn.addEventListener("click", () => {
@@ -219,19 +227,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ADMIN PORTAL SUBTAB SWITCHER
     const subtabModBtn = document.getElementById("subtabModBtn");
+    const subtabSotmBtn = document.getElementById("subtabSotmBtn");
     const subtabSlidesBtn = document.getElementById("subtabSlidesBtn");
     const subtabTicketsBtn = document.getElementById("subtabTicketsBtn");
     const subtabParentBtn = document.getElementById("subtabParentBtn");
     const subtabAnalyticsBtn = document.getElementById("subtabAnalyticsBtn");
 
     const adminSubpanelMod = document.getElementById("adminSubpanelMod");
+    const adminSubpanelSotm = document.getElementById("adminSubpanelSotm");
     const adminSubpanelSlides = document.getElementById("adminSubpanelSlides");
     const adminSubpanelTickets = document.getElementById("adminSubpanelTickets");
     const adminSubpanelParent = document.getElementById("adminSubpanelParent");
     const adminSubpanelAnalytics = document.getElementById("adminSubpanelAnalytics");
 
-    const subBtns = [subtabModBtn, subtabSlidesBtn, subtabTicketsBtn, subtabParentBtn, subtabAnalyticsBtn];
-    const subPanels = [adminSubpanelMod, adminSubpanelSlides, adminSubpanelTickets, adminSubpanelParent, adminSubpanelAnalytics];
+    const subBtns = [subtabModBtn, subtabSotmBtn, subtabSlidesBtn, subtabTicketsBtn, subtabParentBtn, subtabAnalyticsBtn];
+    const subPanels = [adminSubpanelMod, adminSubpanelSotm, adminSubpanelSlides, adminSubpanelTickets, adminSubpanelParent, adminSubpanelAnalytics];
 
     function activateAdminSubtab(targetBtn, targetPanel) {
         subBtns.forEach(b => b && b.classList.remove("active"));
@@ -241,6 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (targetPanel) targetPanel.classList.add("active");
 
         if (targetPanel === adminSubpanelMod) renderModerationQueue();
+        if (targetPanel === adminSubpanelSotm) renderSotmLeaderboard();
         if (targetPanel === adminSubpanelSlides) renderSlideDeck();
         if (targetPanel === adminSubpanelTickets) renderTicketsGrid();
         if (targetPanel === adminSubpanelParent) renderParentCenter();
@@ -248,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (subtabModBtn) subtabModBtn.addEventListener("click", () => activateAdminSubtab(subtabModBtn, adminSubpanelMod));
+    if (subtabSotmBtn) subtabSotmBtn.addEventListener("click", () => activateAdminSubtab(subtabSotmBtn, adminSubpanelSotm));
     if (subtabSlidesBtn) subtabSlidesBtn.addEventListener("click", () => activateAdminSubtab(subtabSlidesBtn, adminSubpanelSlides));
     if (subtabTicketsBtn) subtabTicketsBtn.addEventListener("click", () => activateAdminSubtab(subtabTicketsBtn, adminSubpanelTickets));
     if (subtabParentBtn) subtabParentBtn.addEventListener("click", () => activateAdminSubtab(subtabParentBtn, adminSubpanelParent));
@@ -337,11 +349,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderInteractiveLocationMatrix("Classroom");
 
-    // Quick Add Skill Chips Renderer
+    // TEACHER EXPRESS QUICK ADD CATEGORIZED SKILL BUTTONS RENDERER
     const quickLocation = document.getElementById("quickLocation");
     const quickSkillChipsGrid = document.getElementById("quickSkillChipsGrid");
     const quickSelectedSkillInput = document.getElementById("quickSelectedSkill");
     const quickSelectedPillarInput = document.getElementById("quickSelectedPillar");
+    const quickSelectedSkillBadge = document.getElementById("quickSelectedSkillBadge");
 
     function renderQuickSkillChips() {
         if (!quickSkillChipsGrid) return;
@@ -351,26 +364,50 @@ document.addEventListener("DOMContentLoaded", () => {
         const matrixData = SOAR_MATRIX[currentLang] || SOAR_MATRIX.en;
 
         matrixData.pillars.forEach(pillarObj => {
+            const pillarBox = document.createElement("div");
+            pillarBox.className = `pillar-box pillar-${pillarObj.code}`;
             const items = pillarObj.items[loc] || pillarObj.items["Classroom"] || [];
-            items.forEach(item => {
-                const chip = document.createElement("button");
-                chip.type = "button";
-                chip.className = "prompt-chip";
-                chip.innerHTML = `<span style="font-weight:800; color:${pillarObj.color}">${pillarObj.code}:</span> ${item}`;
-                chip.addEventListener("click", () => {
-                    document.querySelectorAll("#quickSkillChipsGrid .prompt-chip").forEach(c => c.style.borderColor = "#E2E8F0");
-                    chip.style.borderColor = pillarObj.color;
-                    if (quickSelectedSkillInput) quickSelectedSkillInput.value = item;
-                    if (quickSelectedPillarInput) quickSelectedPillarInput.value = pillarObj.code;
-                });
-                quickSkillChipsGrid.appendChild(chip);
+
+            pillarBox.innerHTML = `
+                <div class="pillar-box-header" style="color:${pillarObj.color};">
+                    <span>${pillarObj.code} - ${pillarObj.shortName}</span>
+                </div>
+                <div class="expectation-buttons-list">
+                    ${items.map(item => `
+                        <button type="button" class="quick-skill-btn ${quickSelectedSkillInput && quickSelectedSkillInput.value === item ? 'selected' : ''}" data-pillar="${pillarObj.code}" data-text="${item}">
+                            + ${item}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            quickSkillChipsGrid.appendChild(pillarBox);
+        });
+
+        quickSkillChipsGrid.querySelectorAll(".quick-skill-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                quickSkillChipsGrid.querySelectorAll(".quick-skill-btn").forEach(b => b.classList.remove("selected"));
+                btn.classList.add("selected");
+
+                const code = btn.getAttribute("data-pillar");
+                const text = btn.getAttribute("data-text");
+
+                if (quickSelectedPillarInput) quickSelectedPillarInput.value = code;
+                if (quickSelectedSkillInput) quickSelectedSkillInput.value = text;
+
+                if (quickSelectedSkillBadge) {
+                    quickSelectedSkillBadge.innerHTML = `✅ Selected Skill: <strong>[${code} - ${getPillarFullName(code)}]</strong> "${text}"`;
+                    quickSelectedSkillBadge.style.background = "#D1FAE5";
+                    quickSelectedSkillBadge.style.borderColor = "#10B981";
+                    quickSelectedSkillBadge.style.color = "#065F46";
+                }
             });
         });
     }
 
     if (quickLocation) quickLocation.addEventListener("change", renderQuickSkillChips);
+    renderQuickSkillChips();
 
-    // Alignment Checker
+    // Alignment & Bias / Deficit Language Checker
     const alignmentBox = document.getElementById("alignmentFeedback");
     const alignmentBadge = document.getElementById("alignmentBadge");
     const alignmentText = document.getElementById("alignmentText");
@@ -386,6 +423,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 tag: "Waiting for input...",
                 msg: "Select a location and SOAR expectation button above, then add specific details of what the student did.",
                 cssClass: "quality-neutral"
+            };
+        }
+
+        // Deficit language / backhanded compliment detector
+        const deficitPhrases = ["quiet for once", "didn't talk back", "wasn't causing trouble", "finally listened", "actually behaved", "didn't fight today", "wasn't loud today"];
+        const hasDeficitPhrasing = deficitPhrases.some(phrase => lower.includes(phrase));
+
+        if (hasDeficitPhrasing) {
+            return {
+                score: "Low",
+                tag: "⚠️ Deficit Language Flagged",
+                msg: "⚠️ Nomination contains backhanded phrasing. Focus on positive SOAR behavior rather than what the student avoided doing.",
+                cssClass: "quality-low"
             };
         }
 
@@ -477,7 +527,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 reason,
                 alignmentScore: analysis.score,
                 status: "Pending",
-                adminNote: analysis.score === "Low" ? "Automated Alert: Short/Vague text flagged for Dean review." : "",
+                adminNote: analysis.score === "Low" ? "Automated Alert: Short/Vague or Deficit text flagged for Dean review." : "",
                 date: new Date().toISOString().split("T")[0],
                 language: currentLang
             };
@@ -534,6 +584,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (typeof confetti === "function") confetti({ particleCount: 50, origin: { y: 0.6 } });
             alert(`⚡ Quick nomination submitted for ${studentName}!`);
             quickAddForm.reset();
+            if (quickSelectedSkillInput) quickSelectedSkillInput.value = "";
+            if (quickSelectedSkillBadge) quickSelectedSkillBadge.innerHTML = `Selected Skill: <em>(Click a SOAR skill button above)</em>`;
             renderQuickSkillChips();
         });
     }
@@ -629,6 +681,99 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // FUZZY NAME SIMILARITY ENGINE ("Is this the same student as...?")
+    function findSimilarStudentProfiles(studentName, currentNomId) {
+        if (!studentName || studentName.length < 3) return null;
+
+        const normCurrent = studentName.toLowerCase().trim();
+
+        const masterProfiles = {};
+        nominations.forEach(n => {
+            if (n.id === currentNomId) return;
+            const norm = n.studentName.toLowerCase().trim();
+            if (!masterProfiles[norm]) {
+                masterProfiles[norm] = {
+                    masterName: n.studentName,
+                    grade: n.grade,
+                    count: 1
+                };
+            } else {
+                masterProfiles[norm].count++;
+            }
+        });
+
+        for (const [normMaster, prof] of Object.entries(masterProfiles)) {
+            if (normCurrent === normMaster) continue;
+
+            const partsCurrent = normCurrent.split(" ");
+            const partsMaster = normMaster.split(" ");
+
+            if (partsCurrent.length >= 1 && partsMaster.length >= 1) {
+                if (partsCurrent[0] === partsMaster[0]) {
+                    if (partsCurrent.length > 1 && partsMaster.length > 1) {
+                        if (partsCurrent[1][0] === partsMaster[1][0]) return prof;
+                    } else {
+                        return prof;
+                    }
+                }
+            }
+
+            if (getLevenshteinDistance(normCurrent, normMaster) <= 2) {
+                return prof;
+            }
+        }
+
+        return null;
+    }
+
+    function getLevenshteinDistance(a, b) {
+        if (a.length === 0) return b.length;
+        if (b.length === 0) return a.length;
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(
+                        matrix[i - 1][j - 1] + 1,
+                        matrix[i][j - 1] + 1,
+                        matrix[i - 1][j] + 1
+                    );
+                }
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    window.mergeStudentName = function(nomId, targetMasterName) {
+        if (!isDeanAuthenticated) return;
+        const nom = nominations.find(n => n.id === nomId);
+        if (nom) {
+            const oldName = nom.studentName;
+            nom.studentName = targetMasterName;
+            nom.adminNote = `Merged spelling "${oldName}" ➔ "${targetMasterName}"`;
+            saveState();
+            renderModerationQueue();
+            renderSotmLeaderboard();
+            renderSlideDeck();
+            renderTicketsGrid();
+            alert(`🔗 Merged student name "${oldName}" into "${targetMasterName}"!`);
+        }
+    };
+
+    window.dismissSimilarityFlag = function(nomId) {
+        const nom = nominations.find(n => n.id === nomId);
+        if (nom) {
+            nom.dismissedSimilarityFlag = true;
+            saveState();
+            renderModerationQueue();
+        }
+    };
+
     // DEAN MODERATION HUB
     let currentAdminFilter = "all";
     const nominationList = document.getElementById("nominationList");
@@ -673,6 +818,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         filtered.forEach(nom => {
+            const similarityMatch = !nom.dismissedSimilarityFlag ? findSimilarStudentProfiles(nom.studentName, nom.id) : null;
+
             const card = document.createElement("div");
             card.className = `nom-card pillar-${nom.pillar}`;
             card.innerHTML = `
@@ -683,6 +830,16 @@ document.addEventListener("DOMContentLoaded", () => {
                     </div>
                     <span class="status-badge ${nom.status.replace(/\s+/g, '-')}">${nom.status}</span>
                 </div>
+
+                ${similarityMatch ? `
+                    <div class="duplicate-flag-banner">
+                        ⚠️ <strong>Name Similarity Alert:</strong> Is this the same student as <strong>"${similarityMatch.masterName}"</strong> (${similarityMatch.grade} • ${similarityMatch.count} nominations)?
+                        <div style="margin-top:0.4rem; display:flex; gap:0.4rem;">
+                            <button class="btn btn-sm btn-secondary" onclick="mergeStudentName('${nom.id}', '${similarityMatch.masterName}')">🔗 Merge to "${similarityMatch.masterName}"</button>
+                            <button class="btn btn-sm btn-ghost" onclick="dismissSimilarityFlag('${nom.id}')">Keep Separate</button>
+                        </div>
+                    </div>
+                ` : ''}
 
                 <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
                     <span class="prompt-chip" style="background:#0F172A; color:#FFF;">${nom.pillar} - ${nom.pillarName}</span>
@@ -715,6 +872,7 @@ document.addEventListener("DOMContentLoaded", () => {
             target.status = newStatus;
             saveState();
             renderModerationQueue();
+            renderSotmLeaderboard();
             renderSlideDeck();
             renderTicketsGrid();
         }
@@ -733,6 +891,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             saveState();
             renderModerationQueue();
+            renderSotmLeaderboard();
             alert(`Approved ${count} high-quality pending nominations!`);
         });
     }
@@ -753,6 +912,297 @@ document.addEventListener("DOMContentLoaded", () => {
             a.click();
         });
     }
+
+    // STUDENT OF THE MONTH LEADERBOARD ENGINE (SPECIFIC MONTH, QUARTER, SEMESTER & YEAR FILTERS)
+    const sotmLeaderboardContainer = document.getElementById("sotmLeaderboardContainer");
+    const sotmMonthSelect = document.getElementById("sotmMonthSelect");
+    const sotmQuarterSelect = document.getElementById("sotmQuarterSelect");
+    const sotmSemesterSelect = document.getElementById("sotmSemesterSelect");
+
+    const sotmMonthSelectorGroup = document.getElementById("sotmMonthSelectorGroup");
+    const sotmQuarterSelectorGroup = document.getElementById("sotmQuarterSelectorGroup");
+    const sotmSemesterSelectorGroup = document.getElementById("sotmSemesterSelectorGroup");
+
+    if (sotmMonthSelect) {
+        const now = new Date();
+        const curY = now.getFullYear();
+        const curM = String(now.getMonth() + 1).padStart(2, '0');
+        const defaultVal = `${curY}-${curM}`;
+        if (Array.from(sotmMonthSelect.options).some(o => o.value === defaultVal)) {
+            sotmMonthSelect.value = defaultVal;
+        }
+    }
+
+    document.querySelectorAll("[data-sotm-mode]").forEach(pill => {
+        pill.addEventListener("click", () => {
+            document.querySelectorAll("[data-sotm-mode]").forEach(p => p.classList.remove("active"));
+            pill.classList.add("active");
+            sotmSelectedMode = pill.getAttribute("data-sotm-mode");
+
+            if (sotmMonthSelectorGroup) sotmMonthSelectorGroup.style.display = sotmSelectedMode === "month" ? "flex" : "none";
+            if (sotmQuarterSelectorGroup) sotmQuarterSelectorGroup.style.display = sotmSelectedMode === "quarter" ? "flex" : "none";
+            if (sotmSemesterSelectorGroup) sotmSemesterSelectorGroup.style.display = sotmSelectedMode === "semester" ? "flex" : "none";
+
+            renderSotmLeaderboard();
+        });
+    });
+
+    if (sotmMonthSelect) sotmMonthSelect.addEventListener("change", renderSotmLeaderboard);
+    if (sotmQuarterSelect) sotmQuarterSelect.addEventListener("change", renderSotmLeaderboard);
+    if (sotmSemesterSelect) sotmSemesterSelect.addEventListener("change", renderSotmLeaderboard);
+
+    document.querySelectorAll("[data-sotm-grade]").forEach(pill => {
+        pill.addEventListener("click", () => {
+            document.querySelectorAll("[data-sotm-grade]").forEach(p => p.classList.remove("active"));
+            pill.classList.add("active");
+            sotmSelectedGrade = pill.getAttribute("data-sotm-grade");
+            renderSotmLeaderboard();
+        });
+    });
+
+    function isNominationInTimeframe(nomDateStr) {
+        if (!nomDateStr || sotmSelectedMode === "year") return true;
+
+        if (sotmSelectedMode === "month") {
+            const targetMonth = sotmMonthSelect ? sotmMonthSelect.value : "2026-08";
+            return nomDateStr.startsWith(targetMonth);
+        }
+
+        if (sotmSelectedMode === "quarter") {
+            const q = sotmQuarterSelect ? sotmQuarterSelect.value : "Q1";
+            if (q === "Q1") return nomDateStr.startsWith("2026-08") || nomDateStr.startsWith("2026-09") || nomDateStr.startsWith("2026-10");
+            if (q === "Q2") return nomDateStr.startsWith("2026-11") || nomDateStr.startsWith("2026-12") || nomDateStr.startsWith("2027-01");
+            if (q === "Q3") return nomDateStr.startsWith("2027-02") || nomDateStr.startsWith("2027-03");
+            if (q === "Q4") return nomDateStr.startsWith("2027-04") || nomDateStr.startsWith("2027-05");
+        }
+
+        if (sotmSelectedMode === "semester") {
+            const sem = sotmSemesterSelect ? sotmSemesterSelect.value : "S1";
+            if (sem === "S1") return nomDateStr.startsWith("2026-08") || nomDateStr.startsWith("2026-09") || nomDateStr.startsWith("2026-10") || nomDateStr.startsWith("2026-11") || nomDateStr.startsWith("2026-12");
+            if (sem === "S2") return nomDateStr.startsWith("2027-01") || nomDateStr.startsWith("2027-02") || nomDateStr.startsWith("2027-03") || nomDateStr.startsWith("2027-04") || nomDateStr.startsWith("2027-05");
+        }
+
+        return true;
+    }
+
+    function renderSotmLeaderboard() {
+        if (!sotmLeaderboardContainer || !isDeanAuthenticated) return;
+        sotmLeaderboardContainer.innerHTML = "";
+
+        const studentAgg = {};
+        nominations.forEach(nom => {
+            if (!isNominationInTimeframe(nom.date)) return;
+            if (sotmSelectedGrade !== "all" && nom.grade !== sotmSelectedGrade) return;
+
+            const nameKey = nom.studentName.toLowerCase().trim();
+            if (!studentAgg[nameKey]) {
+                studentAgg[nameKey] = {
+                    studentName: nom.studentName,
+                    grade: nom.grade,
+                    totalCount: 0,
+                    approvedCount: 0,
+                    pillars: { S: 0, O: 0, A: 0, R: 0 },
+                    nominators: new Set(),
+                    stories: []
+                };
+            }
+
+            studentAgg[nameKey].totalCount++;
+            if (nom.status === "Approved") studentAgg[nameKey].approvedCount++;
+            if (nom.pillar && studentAgg[nameKey].pillars[nom.pillar] !== undefined) {
+                studentAgg[nameKey].pillars[nom.pillar]++;
+            }
+            studentAgg[nameKey].nominators.add(nom.nominatorName);
+            studentAgg[nameKey].stories.push({
+                nominator: nom.nominatorName,
+                pillar: nom.pillar,
+                reason: nom.reason,
+                date: nom.date
+            });
+        });
+
+        const sortedStudents = Object.values(studentAgg).sort((a, b) => b.totalCount - a.totalCount);
+
+        if (sortedStudents.length === 0) {
+            let label = "Selected Month";
+            if (sotmSelectedMode === "month" && sotmMonthSelect) {
+                label = sotmMonthSelect.options[sotmMonthSelect.selectedIndex].text;
+            } else if (sotmSelectedMode === "quarter" && sotmQuarterSelect) {
+                label = sotmQuarterSelect.options[sotmQuarterSelect.selectedIndex].text;
+            }
+            sotmLeaderboardContainer.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:3rem; background:#FFF; border-radius:12px;">
+                    <h3>No Nominations Found for ${label} and Selected Grade Level</h3>
+                    <p style="color:#64748B;">Try selecting a different month from the dropdown above or submitting a new nomination!</p>
+                </div>
+            `;
+            return;
+        }
+
+        sortedStudents.slice(0, 10).forEach((st, idx) => {
+            const rank = idx + 1;
+            const isAwarded = !!awardedSotmStudents[st.studentName.toLowerCase().trim()];
+            const isFavoritedCapAlert = st.totalCount >= 4;
+
+            const card = document.createElement("div");
+            card.className = `sotm-card ${rank === 1 ? 'rank-1' : ''} ${isAwarded ? 'awarded' : ''}`;
+
+            card.innerHTML = `
+                <div class="sotm-card-top">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <div class="sotm-rank-badge">#${rank}</div>
+                        <div>
+                            <div class="sotm-student-name">${st.studentName}</div>
+                            <div style="font-size:0.8rem; color:#64748B; font-weight:700;">${st.grade} • ${st.nominators.size} Staff Nominators</div>
+                        </div>
+                    </div>
+                    <span class="sotm-nom-count">${st.totalCount} Nominations</span>
+                </div>
+
+                ${isFavoritedCapAlert ? `
+                    <div style="background:#FFFBEB; border:1px solid #F59E0B; border-radius:6px; padding:0.4rem 0.6rem; font-size:0.75rem; color:#92400E; margin-bottom:0.6rem;">
+                        <strong>Equity Shield:</strong> Highly recognized student (${st.totalCount} nominations). Ensure other students in ${st.grade} receive equal recognition opportunity!
+                    </div>
+                ` : ''}
+
+                <div class="sotm-pillar-counts">
+                    <span class="pillar-count-chip" style="background:#DC143C;">S: ${st.pillars.S}</span>
+                    <span class="pillar-count-chip" style="background:#D97706;">O: ${st.pillars.O}</span>
+                    <span class="pillar-count-chip" style="background:#0D9488;">A: ${st.pillars.A}</span>
+                    <span class="pillar-count-chip" style="background:#2563EB;">R: ${st.pillars.R}</span>
+                </div>
+
+                <div class="sotm-reasons-preview">
+                    <strong>Faculty Commendations (${st.stories.length}):</strong>
+                    ${st.stories.map(s => `
+                        <div class="sotm-reason-item">
+                            <strong>${s.nominator} (${s.pillar}):</strong> "${s.reason}"
+                        </div>
+                    `).join('')}
+                </div>
+
+                <button type="button" class="btn ${isAwarded ? 'btn-secondary' : 'btn-primary'} btn-sm" style="width:100%; ${isAwarded ? 'background:#10B981;' : ''}" onclick="toggleAwardSotm('${st.studentName.replace(/'/g, "\\'")}', '${st.grade}')">
+                    ${isAwarded ? '🌟 Awarded Student of the Month ✅' : '🌟 Award Student of the Month'}
+                </button>
+
+                <div class="sotm-cert-actions">
+                    <button type="button" class="btn btn-ghost btn-sm" style="flex:1;" onclick="printSotmCertificate('${st.studentName.replace(/'/g, "\\'")}', '${st.grade}', 'en')">
+                        🖨️ Cert (EN)
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm" style="flex:1;" onclick="printSotmCertificate('${st.studentName.replace(/'/g, "\\'")}', '${st.grade}', 'es')">
+                        📜 Certificado (ES)
+                    </button>
+                </div>
+            `;
+            sotmLeaderboardContainer.appendChild(card);
+        });
+    }
+
+    window.toggleAwardSotm = function(studentName, grade) {
+        if (!isDeanAuthenticated) return;
+        const key = studentName.toLowerCase().trim();
+        if (awardedSotmStudents[key]) {
+            delete awardedSotmStudents[key];
+        } else {
+            awardedSotmStudents[key] = { studentName, grade, awardedDate: new Date().toISOString().split("T")[0] };
+            if (typeof confetti === "function") confetti({ particleCount: 100, spread: 80, origin: { y: 0.5 } });
+        }
+        saveState();
+        renderSotmLeaderboard();
+    };
+
+    // FORMAL BILINGUAL STUDENT OF THE MONTH CERTIFICATE PRINTING
+    window.printSotmCertificate = function(studentName, grade, lang = "en") {
+        if (!isDeanAuthenticated) return;
+        const printContainer = document.getElementById("printContainer");
+        if (!printContainer) return;
+
+        let monthLabel = new Date().toLocaleDateString(lang === "es" ? "es-US" : "en-US", { month: "long", year: "numeric" });
+        if (sotmSelectedMode === "month" && sotmMonthSelect) {
+            const [y, m] = sotmMonthSelect.value.split("-");
+            const d = new Date(parseInt(y), parseInt(m) - 1, 1);
+            monthLabel = d.toLocaleDateString(lang === "es" ? "es-US" : "en-US", { month: "long", year: "numeric" });
+        }
+
+        const currentStudentNoms = nominations.filter(n => n.studentName.toLowerCase().trim() === studentName.toLowerCase().trim());
+        const sampleReason = currentStudentNoms.length > 0 ? currentStudentNoms[0].reason : "Consistently upholding S.O.A.R. core values across East Central MS campus.";
+
+        let html = "";
+        if (lang === "es") {
+            html = `
+                <div class="printable-sotm-certificate">
+                    <div>
+                        <div class="cert-school-name">ESCUELA SECUNDARIA EAST CENTRAL</div>
+                        <div class="cert-award-title">CERTIFICADO DE RECONOCIMIENTO: ESTUDIANTE DEL MES</div>
+                    </div>
+
+                    <div>
+                        <div class="cert-recipient-label">ESTE CERTIFICADO ES CONCEDIDO CON ORGULLO A</div>
+                        <div class="cert-recipient-name">${studentName}</div>
+                        <div class="cert-grade-tag">GRADO: ${grade.toUpperCase()} • MES: ${monthLabel.toUpperCase()}</div>
+                    </div>
+
+                    <div class="cert-body-text">
+                        "Por demostrar de manera sobresaliente los valores fundamentales S.O.A.R. (Mostrar Respeto, Asumir Responsabilidad, Actuar con Integridad y Superar Conflictos) en East Central Middle School."
+                        <br><br>
+                        <strong style="font-family:var(--font-main); font-size:0.9rem;">Mención de la Facultad:</strong> "${sampleReason}"
+                    </div>
+
+                    <div class="cert-footer-row">
+                        <div class="cert-sig-box">
+                            <div class="cert-sig-line"></div>
+                            <div class="cert-sig-title">DECANO DE ESTUDIANTES</div>
+                        </div>
+                        <div style="font-weight:800; font-size:0.85rem; color:#8B0000; letter-spacing:0.05em;">
+                            EAST CENTRAL CARDINALS • S.O.A.R.
+                        </div>
+                        <div class="cert-sig-box">
+                            <div class="cert-sig-line"></div>
+                            <div class="cert-sig-title">DIRECTOR / PRINCIPAL</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html = `
+                <div class="printable-sotm-certificate">
+                    <div>
+                        <div class="cert-school-name">EAST CENTRAL MIDDLE SCHOOL</div>
+                        <div class="cert-award-title">STUDENT OF THE MONTH COMMENDATION CERTIFICATE</div>
+                    </div>
+
+                    <div>
+                        <div class="cert-recipient-label">THIS FORMAL AWARD IS PROUDLY PRESENTED TO</div>
+                        <div class="cert-recipient-name">${studentName}</div>
+                        <div class="cert-grade-tag">GRADE LEVEL: ${grade.toUpperCase()} • MONTH: ${monthLabel.toUpperCase()}</div>
+                    </div>
+
+                    <div class="cert-body-text">
+                        "For exemplary dedication in demonstrating our core S.O.A.R. values (Show Respect, Own Your Learning, Act with Integrity, and Rise Above Conflict) across East Central Middle School."
+                        <br><br>
+                        <strong style="font-family:var(--font-main); font-size:0.9rem;">Faculty Commendation:</strong> "${sampleReason}"
+                    </div>
+
+                    <div class="cert-footer-row">
+                        <div class="cert-sig-box">
+                            <div class="cert-sig-line"></div>
+                            <div class="cert-sig-title">DEAN OF STUDENTS</div>
+                        </div>
+                        <div style="font-weight:800; font-size:0.85rem; color:#8B0000; letter-spacing:0.05em;">
+                            EAST CENTRAL CARDINALS • S.O.A.R.
+                        </div>
+                        <div class="cert-sig-box">
+                            <div class="cert-sig-line"></div>
+                            <div class="cert-sig-title">SCHOOL PRINCIPAL</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        printContainer.innerHTML = html;
+        window.print();
+    };
 
     // REDESIGNED SOAR BUCKS TICKET STUDIO ENGINE
     const ticketModeStudentsBtn = document.getElementById("ticketModeStudentsBtn");
@@ -777,7 +1227,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         ticketModeBlankBtn.addEventListener("click", () => {
             ticketStudioMode = "blank";
-            ticketModeBlankBtn.classList.add("active");
+            ticketModeBlankBtn.classList.remove("active");
             ticketModeStudentsBtn.classList.remove("active");
             if (studentTicketSelectionBar) studentTicketSelectionBar.style.display = "none";
             renderTicketsGrid();
@@ -818,7 +1268,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const approvedList = nominations.filter(n => n.status === "Approved");
         if (approvedTicketCount) approvedTicketCount.textContent = approvedList.length;
 
-        // Initialize selections if empty
         if (selectedTicketIds.size === 0 && approvedList.length > 0) {
             approvedList.forEach(n => selectedTicketIds.add(n.id));
         }
@@ -886,7 +1335,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 ticketsSheetPreview.appendChild(buck);
             });
         } else {
-            // Mode B: Blank Cut-Out Bucks for Classroom Distribution
             for (let i = 0; i < density; i++) {
                 const serial = `ECMS-BLANK-${2000 + i}`;
                 const buck = document.createElement("div");
@@ -1247,7 +1695,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // PROTECTED ANALYTICS
+    // PROTECTED ANALYTICS & DEAN EQUITY DASHBOARD
     function renderAnalytics() {
         if (!isDeanAuthenticated) return;
 
@@ -1368,7 +1816,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
             });
 
-            html += `</tr>`;
+            html += `Resting...`;
         });
 
         html += `</tbody>`;

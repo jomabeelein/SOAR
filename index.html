@@ -6,7 +6,7 @@
     <title>East Central MS - S.O.A.R. Student Recognition System</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
@@ -297,9 +297,9 @@
 
                 <!-- Teacher Subpanel 1: 10-Second Quick Add -->
                 <div id="teacherSubpanelQuick" class="teacher-subpanel active">
-                    <div class="form-card" style="max-width:800px; margin:0 auto;">
+                    <div class="form-card" style="max-width:850px; margin:0 auto;">
                         <h3 style="margin-bottom:0.5rem;">⚡ 10-Second Express Student Nomination</h3>
-                        <p style="font-size:0.875rem; color:var(--slate-600); margin-bottom:1.5rem;">Pick a student, tap a location, and click a SOAR skill to instant-submit!</p>
+                        <p style="font-size:0.875rem; color:var(--slate-600); margin-bottom:1.5rem;">Pick a student, tap a location, and click a SOAR skill button below to instant-submit!</p>
 
                         <form id="quickAddForm">
                             <div class="form-row two-col">
@@ -338,20 +338,25 @@
                             </div>
 
                             <div class="form-group">
-                                <label>Click 1 Specific SOAR Skill Demonstrated:</label>
-                                <div id="quickSkillChipsGrid" class="chip-container" style="gap:0.6rem;">
+                                <label style="font-size:0.95rem; font-weight:800; color:var(--slate-900);">
+                                    Click 1 SOAR Skill Demonstrated: <span class="required">*</span>
+                                </label>
+                                <div id="quickSkillChipsGrid" class="quick-skills-categorized-grid">
                                     <!-- Populated dynamically -->
                                 </div>
                                 <input type="hidden" id="quickSelectedPillar" value="S">
                                 <input type="hidden" id="quickSelectedSkill" value="" required>
+                                <div id="quickSelectedSkillBadge" class="quick-skill-selection-indicator">
+                                    Selected Skill: <em>(Click a SOAR skill button above)</em>
+                                </div>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group" style="margin-top:1rem;">
                                 <label>Quick Note / Context (Optional):</label>
                                 <input type="text" id="quickAddNote" placeholder="e.g. During 3rd period lab time">
                             </div>
 
-                            <button type="submit" class="btn btn-primary btn-lg" style="width:100%; margin-top:1rem;">
+                            <button type="submit" class="btn btn-primary btn-lg" style="width:100%; margin-top:1rem; background:#D97706;">
                                 ⚡ Instant Submit Nomination
                             </button>
                         </form>
@@ -435,7 +440,7 @@
             <div id="adminLockScreen" class="lock-screen-box">
                 <div class="lock-icon-circle">🛡️🔒</div>
                 <h2>Dean & Administrator Access Control</h2>
-                <p>Access to the Moderation Queue, Slide Deck Studio, SOAR Bucks Tickets, Parent Message Generators, and Staff Analytics is restricted to authorized school staff.</p>
+                <p>Access to the Moderation Queue, Student of the Month Leaderboard, Slide Deck Studio, SOAR Bucks Tickets, Parent Message Generators, and Staff Analytics is restricted to authorized school staff.</p>
                 
                 <form id="deanPasscodeForm" class="lock-form">
                     <div class="form-group">
@@ -455,7 +460,7 @@
                 <div class="admin-header">
                     <div>
                         <h2>Dean & Administrator Portal</h2>
-                        <p>Approve nominations, present slide decks, print tickets, generate parent messages, and analyze equity metrics.</p>
+                        <p>Approve nominations, resolve duplicate student spelling flags, select Students of the Month, print bilingual certificates, present slide decks, and print tickets.</p>
                     </div>
                     <div class="admin-actions-top">
                         <button id="lockHubNowBtn" class="btn btn-ghost" style="border-color:#EF4444; color:#EF4444;">
@@ -476,6 +481,7 @@
                 <!-- Admin Sub-Navigation Tabs -->
                 <div class="admin-subnav-bar">
                     <button class="admin-subtab-btn active" id="subtabModBtn">📋 Approval Queue</button>
+                    <button class="admin-subtab-btn" id="subtabSotmBtn">🏆 Top 10 Student of Month</button>
                     <button class="admin-subtab-btn" id="subtabSlidesBtn">📺 Slide Deck Studio</button>
                     <button class="admin-subtab-btn" id="subtabTicketsBtn">🎟️ SOAR Bucks & Tickets</button>
                     <button class="admin-subtab-btn" id="subtabParentBtn">✉️ Parent Messages</button>
@@ -508,7 +514,84 @@
                     </div>
                 </div>
 
-                <!-- Sub-Panel 2: Protected Slide Deck Studio -->
+                <!-- Sub-Panel 2: TOP 10 STUDENT OF THE MONTH LEADERBOARD & BILINGUAL CERTIFICATE PRINTING -->
+                <div id="adminSubpanelSotm" class="admin-subpanel">
+                    <div class="sotm-header-card">
+                        <div class="sotm-title-group">
+                            <h3>🏆 Student Recognition Leaderboard</h3>
+                            <p>Select any specific month of the school year, quarter, semester, or grade level to rank nominations and print certificates!</p>
+                        </div>
+                        
+                        <div class="sotm-filters-wrapper" style="display:flex; flex-direction:column; gap:0.6rem; align-items:flex-end;">
+                            
+                            <!-- Mode Filter Toggle Pills -->
+                            <div class="sotm-filter-row">
+                                <span class="filter-label-tag">📅 Timeframe Type:</span>
+                                <div class="sotm-period-filter-pills">
+                                    <button type="button" class="sotm-pill active" data-sotm-mode="month">🗓️ Specific Month</button>
+                                    <button type="button" class="sotm-pill" data-sotm-mode="quarter">📆 Quarter (Q1-Q4)</button>
+                                    <button type="button" class="sotm-pill" data-sotm-mode="semester">🎓 Semester</button>
+                                    <button type="button" class="sotm-pill" data-sotm-mode="year">🏫 Full School Year</button>
+                                </div>
+                            </div>
+
+                            <!-- Specific Month / Quarter Selector Dropdowns -->
+                            <div class="sotm-filter-row" id="sotmSubFilterRow">
+                                <div id="sotmMonthSelectorGroup" style="display:flex; align-items:center; gap:0.5rem;">
+                                    <span class="filter-label-tag">Select Month:</span>
+                                    <select id="sotmMonthSelect" class="select-styled btn-sm" style="font-weight:700;">
+                                        <option value="2026-08">August 2026</option>
+                                        <option value="2026-09">September 2026</option>
+                                        <option value="2026-10">October 2026</option>
+                                        <option value="2026-11">November 2026</option>
+                                        <option value="2026-12">December 2026</option>
+                                        <option value="2027-01">January 2027</option>
+                                        <option value="2027-02">February 2027</option>
+                                        <option value="2027-03">March 2027</option>
+                                        <option value="2027-04">April 2027</option>
+                                        <option value="2027-05">May 2027</option>
+                                    </select>
+                                </div>
+
+                                <div id="sotmQuarterSelectorGroup" style="display:none; align-items:center; gap:0.5rem;">
+                                    <span class="filter-label-tag">Select Quarter:</span>
+                                    <select id="sotmQuarterSelect" class="select-styled btn-sm" style="font-weight:700;">
+                                        <option value="Q1">Q1 (August - October)</option>
+                                        <option value="Q2">Q2 (November - January)</option>
+                                        <option value="Q3">Q3 (February - March)</option>
+                                        <option value="Q4">Q4 (April - May)</option>
+                                    </select>
+                                </div>
+
+                                <div id="sotmSemesterSelectorGroup" style="display:none; align-items:center; gap:0.5rem;">
+                                    <span class="filter-label-tag">Select Semester:</span>
+                                    <select id="sotmSemesterSelect" class="select-styled btn-sm" style="font-weight:700;">
+                                        <option value="S1">Fall Semester (Aug - Dec)</option>
+                                        <option value="S2">Spring Semester (Jan - May)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Grade Filter Toggle Pills -->
+                            <div class="sotm-filter-row">
+                                <span class="filter-label-tag">🎓 Grade Level:</span>
+                                <div class="sotm-grade-filter-pills">
+                                    <button type="button" class="sotm-pill active" data-sotm-grade="all">All Grades</button>
+                                    <button type="button" class="sotm-pill" data-sotm-grade="6th Grade">6th Grade</button>
+                                    <button type="button" class="sotm-pill" data-sotm-grade="7th Grade">7th Grade</button>
+                                    <button type="button" class="sotm-pill" data-sotm-grade="8th Grade">8th Grade</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div id="sotmLeaderboardContainer" class="sotm-leaderboard-grid">
+                        <!-- Dynamic Top 10 cards with English & Spanish Certificate print buttons -->
+                    </div>
+                </div>
+
+                <!-- Sub-Panel 3: Protected Slide Deck Studio -->
                 <div id="adminSubpanelSlides" class="admin-subpanel">
                     <div class="studio-header">
                         <div>
@@ -552,7 +635,7 @@
                     </div>
                 </div>
 
-                <!-- Sub-Panel 3: REDESIGNED SOAR BUCKS & TICKETS STUDIO -->
+                <!-- Sub-Panel 4: SOAR BUCKS & TICKETS STUDIO -->
                 <div id="adminSubpanelTickets" class="admin-subpanel">
                     <div class="ticket-studio-toolbar">
                         <div class="toolbar-left">
@@ -561,7 +644,6 @@
                                 <p>Custom print-ready reward bucks for student recognition</p>
                             </div>
 
-                            <!-- Mode Toggle -->
                             <div class="ticket-mode-toggles">
                                 <button type="button" class="mode-btn active" id="ticketModeStudentsBtn">
                                     🎓 Approved Students (<span id="approvedTicketCount">0</span>)
@@ -597,7 +679,6 @@
                         </div>
                     </div>
 
-                    <!-- Filter & Selection Bar for Individual Student Mode -->
                     <div id="studentTicketSelectionBar" class="ticket-selection-bar">
                         <div class="selection-controls">
                             <button type="button" id="selectAllTicketsBtn" class="btn btn-ghost btn-sm">
@@ -610,15 +691,14 @@
                         </div>
                     </div>
 
-                    <!-- Live Print-Ready Sheet Preview -->
                     <div class="sheet-preview-container">
                         <div id="ticketsSheetPreview" class="printable-tickets-grid grid-8">
-                            <!-- Populated dynamically with high-res authentic currency tickets -->
+                            <!-- Dynamic tickets -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Sub-Panel 4: Protected Parent Message Center -->
+                <!-- Sub-Panel 5: Protected Parent Message Center -->
                 <div id="adminSubpanelParent" class="admin-subpanel">
                     <div class="parent-header">
                         <div>
@@ -663,12 +743,14 @@
                     </div>
                 </div>
 
-                <!-- Sub-Panel 5: Protected Equity & Staff Champions Insights -->
+                <!-- Sub-Panel 6: Protected Equity & Staff Champions Insights Hub -->
                 <div id="adminSubpanelAnalytics" class="admin-subpanel">
+                    
+                    <!-- KPI Summary Row -->
                     <div class="kpi-row">
                         <div class="kpi-card">
                             <div class="kpi-value" id="kpiTotal">0</div>
-                            <div class="kpi-label">Total Nominations</div>
+                            <div class="kpi-label">Total Submissions</div>
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-value green" id="kpiApproved">0</div>
@@ -676,14 +758,15 @@
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-value gold" id="kpiApprovalRate">0%</div>
-                            <div class="kpi-label">Alignment Quality Rate</div>
+                            <div class="kpi-label">High-Quality Rate</div>
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-value red" id="kpiUniqueStudents">0</div>
-                            <div class="kpi-label">Unique Students Recognized</div>
+                            <div class="kpi-label">Unique Students</div>
                         </div>
                     </div>
 
+                    <!-- Staff & Pillar Charts Row -->
                     <div class="charts-grid">
                         <div class="chart-card">
                             <h3>🏆 Staff SOAR Champions (Top Nominators)</h3>
@@ -693,34 +776,72 @@
                         </div>
 
                         <div class="chart-card">
-                            <h3>SOAR Pillar Breakdown</h3>
+                            <h3>SOAR Pillar Distribution</h3>
                             <div id="pillarBarChart" class="custom-bar-chart">
                                 <!-- Bar chart -->
                             </div>
                         </div>
                     </div>
 
-                    <div class="equity-card">
-                        <h3>⚖️ Admin Security & Equity Controls</h3>
+                    <!-- ADVANCED DEAN EQUITY & DATA INTEGRITY HUB -->
+                    <div class="equity-hub-card" style="background:#FFFFFF; padding:1.75rem; border-radius:var(--radius-xl); border:1px solid var(--slate-200); margin-top:1.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+                            <div>
+                                <h3 style="font-size:1.25rem; font-weight:800; color:var(--slate-900);">⚖️ Administrative Equity & Inclusion Controls</h3>
+                                <p style="font-size:0.85rem; color:var(--slate-600);">Monitor equity gaps, prevent bias/favoritism, and ensure every Cardinal student is celebrated.</p>
+                            </div>
+                            <span class="badge" style="background:#0F172A; color:#FFF; font-size:0.8rem; padding:0.3rem 0.75rem;">Active Monitoring</span>
+                        </div>
+
                         <div class="considerations-grid">
-                            <div class="c-item">
-                                <h4>1. Fully Protected Portals</h4>
-                                <p>Teacher quick tools and Dean administrative suites are strictly locked behind separate staff passcodes.</p>
+                            
+                            <!-- Equity Control 1: Recognition Distribution Guard -->
+                            <div class="c-item" style="border-left-color:#D97706;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <h4>1. Anti-Favoritism Cap Alert</h4>
+                                    <span style="font-size:0.75rem; font-weight:800; color:#D97706; background:#FEF3C7; padding:0.15rem 0.5rem; border-radius:4px;">Equity Shield</span>
+                                </div>
+                                <p style="font-size:0.825rem; color:var(--slate-700); margin-top:0.4rem;">
+                                    Flags when a single student receives 4+ nominations in a single month to prevent recognition monopolization and encourage staff to spread praise to other students.
+                                </p>
                             </div>
-                            <div class="c-item">
-                                <h4>2. High Speed Teacher Tools</h4>
-                                <p>Teachers access 10-second Quick Add and Class Batch nominations in their private portal.</p>
+
+                            <!-- Equity Control 2: Overlooked Students Watchlist -->
+                            <div class="c-item" style="border-left-color:#10B981;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <h4>2. "Overlooked Students" Radar</h4>
+                                    <span style="font-size:0.75rem; font-weight:800; color:#065F46; background:#D1FAE5; padding:0.15rem 0.5rem; border-radius:4px;">Inclusion Guard</span>
+                                </div>
+                                <p style="font-size:0.825rem; color:var(--slate-700); margin-top:0.4rem;">
+                                    Identifies quiet or under-recognized students who have 0 nominations this quarter so Deans can issue positive "Staff Spotlight Quests" to teachers.
+                                </p>
                             </div>
-                            <div class="c-item">
-                                <h4>3. Interactive Expectation Alignment</h4>
-                                <p>Clicking any expectation button attaches the exact SOAR behavior to the nomination story.</p>
+
+                            <!-- Equity Control 3: Deficit Language Audit -->
+                            <div class="c-item" style="border-left-color:#EF4444;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <h4>3. Bias & Deficit Language Filter</h4>
+                                    <span style="font-size:0.75rem; font-weight:800; color:#991B1B; background:#FEE2E2; padding:0.15rem 0.5rem; border-radius:4px;">Text Audit</span>
+                                </div>
+                                <p style="font-size:0.825rem; color:var(--slate-700); margin-top:0.4rem;">
+                                    Flags backhanded compliments or deficit phrasing (e.g., <em>"he was quiet for once"</em>, <em>"didn't cause trouble today"</em>) before stories go onto public TV slides or parent SMS messages.
+                                </p>
                             </div>
-                            <div class="c-item">
-                                <h4>4. Anti-Bias & Equity Monitoring</h4>
-                                <p>Deans can monitor recognition frequency per grade level to ensure non-classroom settings aren't overlooked.</p>
+
+                            <!-- Equity Control 4: Parent Outreach Equity Log -->
+                            <div class="c-item" style="border-left-color:#2563EB;">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                                    <h4>4. Bilingual Parent Outreach Equity</h4>
+                                    <span style="font-size:0.75rem; font-weight:800; color:#1E40AF; background:#DBEAFE; padding:0.15rem 0.5rem; border-radius:4px;">Language Access</span>
+                                </div>
+                                <p style="font-size:0.825rem; color:var(--slate-700); margin-top:0.4rem;">
+                                    Tracks that Spanish-speaking families receive 100% translated SMS/Letters so non-English speaking guardians are equally connected to school celebrations.
+                                </p>
                             </div>
+
                         </div>
                     </div>
+
                 </div>
 
             </div>
