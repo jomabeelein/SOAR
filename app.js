@@ -7,6 +7,16 @@ document.addEventListener("DOMContentLoaded", () => {
     let storedPasscode = localStorage.getItem("ecms_soar_dean_passcode") || "SOAR2026";
     let storedTeacherPasscode = localStorage.getItem("ecms_soar_teacher_passcode") || "CARDINALS";
 
+    // Student Co-Created Reward Ideas State
+    const DEFAULT_REWARD_IDEAS = [
+        { id: "idea-1", studentName: "Maya Lin", grade: "7th Grade", title: "Front of Lunch Line Pass", cost: "5 SOAR Bucks", reason: "Lets students get lunch early with 2 friends when they show S.O.A.R. behavior in morning classes.", status: "Approved", date: "2026-08-01" },
+        { id: "idea-2", studentName: "Student Council", grade: "Student Leadership / Club", title: "Friday DJ Lunch Song Request", cost: "5 SOAR Bucks", reason: "Play student-requested clean music on cafeteria speakers on Friday afternoon.", status: "Approved", date: "2026-08-02" },
+        { id: "idea-3", studentName: "Jordan Rivera", grade: "8th Grade", title: "Auxiliary Gym VIP Recess", cost: "10 SOAR Bucks", reason: "Open gym time for basketball & games during recess for students keeping campus clean.", status: "Approved", date: "2026-08-03" },
+        { id: "idea-4", studentName: "Sam Smith", grade: "6th Grade", title: "Principal for a Period", cost: "25 SOAR Bucks VIP", reason: "Shadow the Principal, make morning announcements, and sit in the executive office chair!", status: "Approved", date: "2026-08-04" }
+    ];
+
+    let rewardIdeas = JSON.parse(localStorage.getItem("ecms_soar_reward_ideas")) || DEFAULT_REWARD_IDEAS;
+
     let isDeanAuthenticated = sessionStorage.getItem("ecms_soar_is_dean") === "true";
     let isTeacherAuthenticated = sessionStorage.getItem("ecms_soar_is_teacher") === "true";
 
@@ -31,7 +41,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function saveState() {
         localStorage.setItem("ecms_soar_nominations", JSON.stringify(nominations));
         localStorage.setItem("ecms_soar_sotm_awarded", JSON.stringify(awardedSotmStudents));
+        localStorage.setItem("ecms_soar_reward_ideas", JSON.stringify(rewardIdeas));
         updatePendingBadge();
+        renderApprovedRewardStore();
     }
 
     // Header Lock Status Button Guard
@@ -52,6 +64,7 @@ document.addEventListener("DOMContentLoaded", () => {
             renderTicketsGrid();
             renderParentCenter();
             renderSotmLeaderboard();
+            renderRewardIdeasQueue();
         } else {
             if (adminLockScreen) adminLockScreen.style.display = "block";
             if (adminMainContent) adminMainContent.className = "protected-content-hidden";
@@ -199,6 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (targetTab === "tab-admin" && isDeanAuthenticated) renderModerationQueue();
             if (targetTab === "tab-teacher" && isTeacherAuthenticated) renderQuickSkillChips();
             if (targetTab === "tab-matrix") renderMatrixTable();
+            if (targetTab === "tab-store") renderApprovedRewardStore();
         });
     });
 
@@ -227,6 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // ADMIN PORTAL SUBTAB SWITCHER
     const subtabModBtn = document.getElementById("subtabModBtn");
+    const subtabRewardIdeasBtn = document.getElementById("subtabRewardIdeasBtn");
     const subtabSotmBtn = document.getElementById("subtabSotmBtn");
     const subtabSlidesBtn = document.getElementById("subtabSlidesBtn");
     const subtabTicketsBtn = document.getElementById("subtabTicketsBtn");
@@ -234,14 +249,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const subtabAnalyticsBtn = document.getElementById("subtabAnalyticsBtn");
 
     const adminSubpanelMod = document.getElementById("adminSubpanelMod");
+    const adminSubpanelRewardIdeas = document.getElementById("adminSubpanelRewardIdeas");
     const adminSubpanelSotm = document.getElementById("adminSubpanelSotm");
     const adminSubpanelSlides = document.getElementById("adminSubpanelSlides");
     const adminSubpanelTickets = document.getElementById("adminSubpanelTickets");
     const adminSubpanelParent = document.getElementById("adminSubpanelParent");
     const adminSubpanelAnalytics = document.getElementById("adminSubpanelAnalytics");
 
-    const subBtns = [subtabModBtn, subtabSotmBtn, subtabSlidesBtn, subtabTicketsBtn, subtabParentBtn, subtabAnalyticsBtn];
-    const subPanels = [adminSubpanelMod, adminSubpanelSotm, adminSubpanelSlides, adminSubpanelTickets, adminSubpanelParent, adminSubpanelAnalytics];
+    const subBtns = [subtabModBtn, subtabRewardIdeasBtn, subtabSotmBtn, subtabSlidesBtn, subtabTicketsBtn, subtabParentBtn, subtabAnalyticsBtn];
+    const subPanels = [adminSubpanelMod, adminSubpanelRewardIdeas, adminSubpanelSotm, adminSubpanelSlides, adminSubpanelTickets, adminSubpanelParent, adminSubpanelAnalytics];
 
     function activateAdminSubtab(targetBtn, targetPanel) {
         subBtns.forEach(b => b && b.classList.remove("active"));
@@ -251,6 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (targetPanel) targetPanel.classList.add("active");
 
         if (targetPanel === adminSubpanelMod) renderModerationQueue();
+        if (targetPanel === adminSubpanelRewardIdeas) renderRewardIdeasQueue();
         if (targetPanel === adminSubpanelSotm) renderSotmLeaderboard();
         if (targetPanel === adminSubpanelSlides) renderSlideDeck();
         if (targetPanel === adminSubpanelTickets) renderTicketsGrid();
@@ -259,11 +276,130 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (subtabModBtn) subtabModBtn.addEventListener("click", () => activateAdminSubtab(subtabModBtn, adminSubpanelMod));
+    if (subtabRewardIdeasBtn) subtabRewardIdeasBtn.addEventListener("click", () => activateAdminSubtab(subtabRewardIdeasBtn, adminSubpanelRewardIdeas));
     if (subtabSotmBtn) subtabSotmBtn.addEventListener("click", () => activateAdminSubtab(subtabSotmBtn, adminSubpanelSotm));
     if (subtabSlidesBtn) subtabSlidesBtn.addEventListener("click", () => activateAdminSubtab(subtabSlidesBtn, adminSubpanelSlides));
     if (subtabTicketsBtn) subtabTicketsBtn.addEventListener("click", () => activateAdminSubtab(subtabTicketsBtn, adminSubpanelTickets));
     if (subtabParentBtn) subtabParentBtn.addEventListener("click", () => activateAdminSubtab(subtabParentBtn, adminSubpanelParent));
     if (subtabAnalyticsBtn) subtabAnalyticsBtn.addEventListener("click", () => activateAdminSubtab(subtabAnalyticsBtn, adminSubpanelAnalytics));
+
+    // STUDENT CO-CREATED REWARDS FORM & STORE ENGINE
+    const rewardIdeaForm = document.getElementById("rewardIdeaForm");
+    if (rewardIdeaForm) {
+        rewardIdeaForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const studentName = document.getElementById("ideaStudentName").value.trim() || "Anonymous Student";
+            const grade = document.getElementById("ideaGrade").value;
+            const title = document.getElementById("ideaTitle").value.trim();
+            const cost = document.getElementById("ideaSuggestedCost").value;
+            const reason = document.getElementById("ideaReason").value.trim();
+
+            const newIdea = {
+                id: `idea-${Date.now()}`,
+                studentName,
+                grade,
+                title,
+                cost,
+                reason,
+                status: "Pending Review",
+                date: new Date().toISOString().split("T")[0]
+            };
+
+            rewardIdeas.unshift(newIdea);
+            saveState();
+
+            if (typeof confetti === "function") confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+
+            alert(`💡 Thank you! Your reward idea "${title}" has been sent directly to the Deans & Admin team for store approval!`);
+            rewardIdeaForm.reset();
+        });
+    }
+
+    function renderApprovedRewardStore() {
+        const container = document.getElementById("approvedRewardIdeasContainer");
+        if (!container) return;
+
+        const approvedList = rewardIdeas.filter(i => i.status === "Approved");
+        container.innerHTML = "";
+
+        if (approvedList.length === 0) {
+            container.innerHTML = `<p style="font-size:0.85rem; color:#64748B;">No co-created reward ideas approved yet. Be the first to submit an idea!</p>`;
+            return;
+        }
+
+        approvedList.forEach(idea => {
+            const card = document.createElement("div");
+            card.style.cssText = "background:#F8FAFC; border:1px solid #E2E8F0; padding:0.85rem; border-radius:8px;";
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
+                    <strong style="color:#0F172A; font-size:0.95rem;">${idea.title}</strong>
+                    <span style="background:#FEF3C7; color:#92400E; font-size:0.7rem; font-weight:800; padding:0.15rem 0.4rem; border-radius:4px;">${idea.cost}</span>
+                </div>
+                <div style="font-size:0.78rem; color:#475569; margin-bottom:0.3rem;">"${idea.reason}"</div>
+                <div style="font-size:0.72rem; color:#64748B; font-weight:700;">Suggested by: ${idea.studentName} (${idea.grade})</div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    renderApprovedRewardStore();
+
+    function renderRewardIdeasQueue() {
+        const queueList = document.getElementById("rewardIdeasQueueList");
+        if (!queueList || !isDeanAuthenticated) return;
+
+        queueList.innerHTML = "";
+
+        if (rewardIdeas.length === 0) {
+            queueList.innerHTML = `
+                <div style="grid-column:1/-1; text-align:center; padding:3rem; background:#FFF; border-radius:12px;">
+                    <p style="font-size:1.1rem; color:#475569; font-weight:700;">No student reward ideas submitted yet.</p>
+                </div>
+            `;
+            return;
+        }
+
+        rewardIdeas.forEach(idea => {
+            const card = document.createElement("div");
+            card.className = "nom-card";
+            card.style.borderLeft = idea.status === 'Approved' ? '6px solid #10B981' : (idea.status === 'Rejected' ? '6px solid #EF4444' : '6px solid #F59E0B');
+
+            card.innerHTML = `
+                <div class="nom-card-header">
+                    <div>
+                        <div class="student-title">${idea.title}</div>
+                        <div class="nom-meta">Suggested by <strong>${idea.studentName}</strong> (${idea.grade}) • ${idea.date}</div>
+                    </div>
+                    <span class="status-badge" style="background:${idea.status==='Approved'?'#D1FAE5':(idea.status==='Rejected'?'#FEE2E2':'#FEF3C7')}; color:${idea.status==='Approved'?'#065F46':(idea.status==='Rejected'?'#991B1B':'#92400E')}">${idea.status}</span>
+                </div>
+
+                <div style="margin: 0.5rem 0;">
+                    <span class="prompt-chip" style="background:#0F172A; color:#FFF;">🏷️ ${idea.cost}</span>
+                </div>
+
+                <div class="nom-reason-box">
+                    "${idea.reason}"
+                </div>
+
+                <div class="admin-card-actions">
+                    ${idea.status !== 'Approved' ? `<button class="btn btn-primary btn-sm" onclick="updateRewardIdeaStatus('${idea.id}', 'Approved')">✅ Approve & Add to Store</button>` : ''}
+                    ${idea.status !== 'Rejected' ? `<button class="btn btn-ghost btn-sm" style="color:#EF4444;" onclick="updateRewardIdeaStatus('${idea.id}', 'Rejected')">❌ Reject Idea</button>` : ''}
+                </div>
+            `;
+            queueList.appendChild(card);
+        });
+    }
+
+    window.updateRewardIdeaStatus = function(id, newStatus) {
+        if (!isDeanAuthenticated) return;
+        const target = rewardIdeas.find(i => i.id === id);
+        if (target) {
+            target.status = newStatus;
+            saveState();
+            renderRewardIdeasQueue();
+            renderApprovedRewardStore();
+        }
+    };
 
     // NOMINATION FORM: LOCATION CHIP BUTTON TOGGLE & MATRIX RENDERER
     const locationBtnGrid = document.getElementById("locationBtnGrid");
@@ -426,7 +562,6 @@ document.addEventListener("DOMContentLoaded", () => {
             };
         }
 
-        // Deficit language / backhanded compliment detector
         const deficitPhrases = ["quiet for once", "didn't talk back", "wasn't causing trouble", "finally listened", "actually behaved", "didn't fight today", "wasn't loud today"];
         const hasDeficitPhrasing = deficitPhrases.some(phrase => lower.includes(phrase));
 
@@ -650,6 +785,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const pendingCount = nominations.filter(n => n.status === "Pending").length;
         const badge = document.getElementById("pendingBadge");
         if (badge) badge.textContent = pendingCount;
+
+        const pendingIdeasCount = rewardIdeas.filter(i => i.status === "Pending Review").length;
+        const ideasBadge = document.getElementById("pendingRewardIdeasBadge");
+        if (ideasBadge) ideasBadge.textContent = pendingIdeasCount;
     }
     updatePendingBadge();
 
@@ -1816,7 +1955,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
             });
 
-            html += `Resting...`;
+            html += `</tr>`;
         });
 
         html += `</tbody>`;

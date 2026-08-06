@@ -36,6 +36,9 @@
                 <button class="nav-btn active" data-tab="tab-nominate" role="tab">
                     <span class="icon">📝</span> Nominate Student
                 </button>
+                <button class="nav-btn" data-tab="tab-store" role="tab">
+                    <span class="icon">🎟️</span> Rewards Store
+                </button>
                 <button class="nav-btn" data-tab="tab-matrix" role="tab">
                     <span class="icon">📋</span> SOAR Matrix
                 </button>
@@ -84,7 +87,7 @@
                                 <label for="nominatorRole">I am a... <span class="required">*</span></label>
                                 <select id="nominatorRole" required>
                                     <option value="Teacher / Staff">Teacher / Staff Member</option>
-                                    <option value="Student Peer">Student Peer</option>
+                                    <option value="Student Peer">Student Peer (Cardinal Shoutout)</option>
                                     <option value="Admin / Dean">Administrator / Dean</option>
                                     <option value="Parent / Guest">Other Staff</option>
                                 </select>
@@ -238,7 +241,90 @@
             </div>
         </section>
 
-        <!-- ==================== PUBLIC TAB 2: SOAR MATRIX REFERENCE ==================== -->
+        <!-- ==================== PUBLIC TAB 2: SOAR REWARDS STORE (COMING SOON & STUDENT CO-CREATION FORM) ==================== -->
+        <section id="tab-store" class="tab-panel">
+            <div class="portal-hero" style="background: linear-gradient(135deg, #0F172A 0%, #D97706 100%);">
+                <div class="hero-tag" style="border-color:#FFB703; color:#FFB703;">🚧 STORE CO-CREATION IN PROGRESS</div>
+                <h2>🎟️ East Central MS S.O.A.R. Rewards Store — COMING SOON!</h2>
+                <p>We are co-creating the SOAR Rewards Store together with East Central Cardinals! What rewards, privileges, or school events do <strong>YOU</strong> want to earn with your SOAR Bucks?</p>
+            </div>
+
+            <div class="form-grid" style="grid-template-columns: 1.2fr 0.8fr; gap:1.5rem; margin-top:1.5rem;">
+                
+                <!-- Student Reward Idea Co-Creation Form -->
+                <div class="form-card" style="border: 2px solid #FFB703;">
+                    <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                        <span style="font-size:2rem;">💡</span>
+                        <div>
+                            <h3 style="margin:0; color:var(--slate-900);">Co-Create Our Rewards Store!</h3>
+                            <p style="font-size:0.85rem; color:var(--slate-600); margin:0;">Submit your idea directly to the Deans & Administrative team for store approval!</p>
+                        </div>
+                    </div>
+
+                    <form id="rewardIdeaForm">
+                        <div class="form-row two-col">
+                            <div class="form-group">
+                                <label for="ideaStudentName">Your Name (Optional or Anonymous):</label>
+                                <input type="text" id="ideaStudentName" placeholder="e.g. Maya Lin or Student Council">
+                            </div>
+                            <div class="form-group">
+                                <label for="ideaGrade">Grade Level: <span class="required">*</span></label>
+                                <select id="ideaGrade" required>
+                                    <option value="6th Grade">6th Grade</option>
+                                    <option value="7th Grade">7th Grade</option>
+                                    <option value="8th Grade">8th Grade</option>
+                                    <option value="Student Council / Club">Student Leadership / Club</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row two-col">
+                            <div class="form-group">
+                                <label for="ideaTitle">Reward / Privilege Idea Title: <span class="required">*</span></label>
+                                <input type="text" id="ideaTitle" placeholder="e.g., Pajama Day Pass or Open Gym Recess" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="ideaSuggestedCost">Suggested SOAR Buck Price: <span class="required">*</span></label>
+                                <select id="ideaSuggestedCost" required>
+                                    <option value="5 SOAR Bucks">5 SOAR Bucks ($5)</option>
+                                    <option value="10 SOAR Bucks">10 SOAR Bucks ($10)</option>
+                                    <option value="15 SOAR Bucks">15 SOAR Bucks ($15)</option>
+                                    <option value="25 SOAR Bucks">25 SOAR Bucks ($25 VIP)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ideaReason">
+                                Why would students love this reward? <span class="required">*</span>
+                                <span class="label-help">(Explain how this reward motivates positive SOAR behavior at East Central MS)</span>
+                            </label>
+                            <textarea id="ideaReason" rows="3" placeholder="Example: It gives students something fun to look forward to on Fridays and encourages everyone to keep lab tables clean." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg" style="width:100%; background:#D97706; border:none;">
+                            💡 Submit Reward Idea to Deans
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Approved Student Co-Created Ideas Preview Box -->
+                <div class="sidebar-card" style="background:#FFF;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                        <h3 style="margin:0;">🎉 Co-Created Store Preview</h3>
+                        <span class="badge" style="background:#D1FAE5; color:#065F46; font-size:0.75rem;">Dean Approved</span>
+                    </div>
+                    <p style="font-size:0.85rem; color:var(--slate-600); margin-bottom:1rem;">Check out reward ideas suggested by students and approved by Administration!</p>
+
+                    <div id="approvedRewardIdeasContainer" style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <!-- Dynamic approved reward cards -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ==================== PUBLIC TAB 3: SOAR MATRIX REFERENCE ==================== -->
         <section id="tab-matrix" class="tab-panel">
             <div class="matrix-header">
                 <div>
@@ -257,7 +343,7 @@
             </div>
         </section>
 
-        <!-- ==================== PROTECTED TAB 3: TEACHER PORTAL ==================== -->
+        <!-- ==================== PROTECTED TAB 4: TEACHER PORTAL ==================== -->
         <section id="tab-teacher" class="tab-panel">
             
             <div id="teacherLockScreen" class="lock-screen-box">
@@ -434,7 +520,7 @@
             </div>
         </section>
 
-        <!-- ==================== PROTECTED TAB 4: DEAN & ADMIN PORTAL ==================== -->
+        <!-- ==================== PROTECTED TAB 5: DEAN & ADMIN PORTAL ==================== -->
         <section id="tab-admin" class="tab-panel">
             
             <div id="adminLockScreen" class="lock-screen-box">
@@ -460,7 +546,7 @@
                 <div class="admin-header">
                     <div>
                         <h2>Dean & Administrator Portal</h2>
-                        <p>Approve nominations, resolve duplicate student spelling flags, select Students of the Month, print bilingual certificates, present slide decks, and print tickets.</p>
+                        <p>Approve nominations, resolve duplicate student spelling flags, select Students of the Month, review student reward ideas, print bilingual certificates, and present slide decks.</p>
                     </div>
                     <div class="admin-actions-top">
                         <button id="lockHubNowBtn" class="btn btn-ghost" style="border-color:#EF4444; color:#EF4444;">
@@ -481,6 +567,7 @@
                 <!-- Admin Sub-Navigation Tabs -->
                 <div class="admin-subnav-bar">
                     <button class="admin-subtab-btn active" id="subtabModBtn">📋 Approval Queue</button>
+                    <button class="admin-subtab-btn" id="subtabRewardIdeasBtn">💡 Student Reward Ideas (<span id="pendingRewardIdeasBadge">0</span>)</button>
                     <button class="admin-subtab-btn" id="subtabSotmBtn">🏆 Top 10 Student of Month</button>
                     <button class="admin-subtab-btn" id="subtabSlidesBtn">📺 Slide Deck Studio</button>
                     <button class="admin-subtab-btn" id="subtabTicketsBtn">🎟️ SOAR Bucks & Tickets</button>
@@ -511,6 +598,20 @@
                         <div id="nominationList" class="nomination-cards-grid">
                             <!-- Dynamic cards -->
                         </div>
+                    </div>
+                </div>
+
+                <!-- Sub-Panel 1.5: STUDENT CO-CREATED REWARD IDEAS REVIEW HUB -->
+                <div id="adminSubpanelRewardIdeas" class="admin-subpanel">
+                    <div class="sotm-header-card" style="background:#FFF3C4; border-color:#F59E0B;">
+                        <div>
+                            <h3 style="color:#92400E;">💡 Student Co-Created Reward Ideas Queue</h3>
+                            <p style="color:#78350F;">Review reward ideas submitted by East Central MS students. Approve ideas to feature them in the public Rewards Store preview!</p>
+                        </div>
+                    </div>
+
+                    <div id="rewardIdeasQueueList" class="nomination-cards-grid" style="margin-top:1rem;">
+                        <!-- Dynamic student reward idea cards -->
                     </div>
                 </div>
 
