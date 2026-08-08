@@ -9,13 +9,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Student Co-Created Reward Ideas State
     const DEFAULT_REWARD_IDEAS = [
+        { id: "idea-kurland-book", studentName: "Student Council & Library", grade: "All Grades", title: "Token to Ms. Kurland's Book Vending Machine", cost: "5 SOAR Bucks", reason: "Earn a gold token to pick any brand-new book of your choice from Ms. Kurland's famous Book Vending Machine in the library!", status: "Approved", date: "2026-08-01" },
+        { id: "idea-cricut-swag", studentName: "7th Grade STEM Makerspace", grade: "7th Grade", title: "Make Your Own Swag using the Cricut", cost: "10 SOAR Bucks", reason: "Design and craft your own custom vinyl Cardinal sticker, water bottle decal, or notebook art using the school Cricut machine!", status: "Approved", date: "2026-08-02" },
+        { id: "idea-morning-announcer", studentName: "Jordan Lee (8th Grade)", grade: "8th Grade", title: "Guest Morning Announcer on School Intercom", cost: "15 SOAR Bucks", reason: "Join the administration team on the microphone to read morning announcements, sports highlights, and Cardinal shoutouts over the school-wide intercom!", status: "Approved", date: "2026-08-03" },
         { id: "idea-1", studentName: "Maya Lin", grade: "7th Grade", title: "Front of Lunch Line Pass", cost: "5 SOAR Bucks", reason: "Lets students get lunch early with 2 friends when they show S.O.A.R. behavior in morning classes.", status: "Approved", date: "2026-08-01" },
         { id: "idea-2", studentName: "Student Council", grade: "Student Leadership / Club", title: "Friday DJ Lunch Song Request", cost: "5 SOAR Bucks", reason: "Play student-requested clean music on cafeteria speakers on Friday afternoon.", status: "Approved", date: "2026-08-02" },
-        { id: "idea-3", studentName: "Jordan Rivera", grade: "8th Grade", title: "Auxiliary Gym VIP Recess", cost: "10 SOAR Bucks", reason: "Open gym time for basketball & games during recess for students keeping campus clean.", status: "Approved", date: "2026-08-03" },
+        { id: "idea-3", studentName: "Jordan Rivera", grade: "8th Grade", title: "Auxiliary Gym VIP Recess Access", cost: "10 SOAR Bucks", reason: "Open gym time for basketball & games during recess for students keeping campus clean.", status: "Approved", date: "2026-08-03" },
         { id: "idea-4", studentName: "Sam Smith", grade: "6th Grade", title: "Principal for a Period", cost: "25 SOAR Bucks VIP", reason: "Shadow the Principal, make morning announcements, and sit in the executive office chair!", status: "Approved", date: "2026-08-04" }
     ];
 
-    let rewardIdeas = JSON.parse(localStorage.getItem("ecms_soar_reward_ideas")) || DEFAULT_REWARD_IDEAS;
+    let storedIdeas = JSON.parse(localStorage.getItem("ecms_soar_reward_ideas")) || [];
+    // Ensure all default ideas exist
+    DEFAULT_REWARD_IDEAS.forEach(defIdea => {
+        if (!storedIdeas.some(i => i.title.toLowerCase() === defIdea.title.toLowerCase())) {
+            storedIdeas.push(defIdea);
+        }
+    });
+    let rewardIdeas = storedIdeas.length > 0 ? storedIdeas : DEFAULT_REWARD_IDEAS;
+    localStorage.setItem("ecms_soar_reward_ideas", JSON.stringify(rewardIdeas));
 
     let isDeanAuthenticated = sessionStorage.getItem("ecms_soar_is_dean") === "true";
     let isTeacherAuthenticated = sessionStorage.getItem("ecms_soar_is_teacher") === "true";
@@ -315,6 +326,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    function getRewardIcon(title) {
+        const t = title.toLowerCase();
+        if (t.includes("book") || t.includes("kurland") || t.includes("vending")) return "📚";
+        if (t.includes("cricut") || t.includes("swag") || t.includes("sticker")) return "🎨";
+        if (t.includes("announcer") || t.includes("intercom") || t.includes("mic")) return "🎙️";
+        if (t.includes("lunch")) return "🥪";
+        if (t.includes("dj") || t.includes("song") || t.includes("music")) return "🎧";
+        if (t.includes("gym") || t.includes("recess") || t.includes("ball")) return "🏀";
+        if (t.includes("principal") || t.includes("dean")) return "👑";
+        if (t.includes("chair")) return "🪑";
+        if (t.includes("homework")) return "🎒";
+        return "🎟️";
+    }
+
     function renderApprovedRewardStore() {
         const container = document.getElementById("approvedRewardIdeasContainer");
         if (!container) return;
@@ -328,15 +353,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         approvedList.forEach(idea => {
+            const icon = getRewardIcon(idea.title);
             const card = document.createElement("div");
-            card.style.cssText = "background:#F8FAFC; border:1px solid #E2E8F0; padding:0.85rem; border-radius:8px;";
+            card.style.cssText = "background:#FFF; border:1.5px solid #E2E8F0; padding:1rem; border-radius:10px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); transition: transform 0.15s ease;";
             card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-                    <strong style="color:#0F172A; font-size:0.95rem;">${idea.title}</strong>
-                    <span style="background:#FEF3C7; color:#92400E; font-size:0.7rem; font-weight:800; padding:0.15rem 0.4rem; border-radius:4px;">${idea.cost}</span>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.4rem; gap:0.5rem;">
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <span style="font-size:1.4rem;">${icon}</span>
+                        <strong style="color:#0F172A; font-size:0.95rem; line-height:1.2;">${idea.title}</strong>
+                    </div>
+                    <span style="background:#FEF3C7; color:#92400E; font-size:0.75rem; font-weight:900; padding:0.2rem 0.55rem; border-radius:999px; white-space:nowrap; border:1px solid #FDE68A;">${idea.cost}</span>
                 </div>
-                <div style="font-size:0.78rem; color:#475569; margin-bottom:0.3rem;">"${idea.reason}"</div>
-                <div style="font-size:0.72rem; color:#64748B; font-weight:700;">Suggested by: ${idea.studentName} (${idea.grade})</div>
+                <div style="font-size:0.82rem; color:#475569; margin-bottom:0.45rem; line-height:1.4;">"${idea.reason}"</div>
+                <div style="font-size:0.75rem; color:#64748B; font-weight:700; display:flex; align-items:center; gap:0.35rem;">
+                    <span>💡 Co-created by:</span> <span style="color:#8B0000;">${idea.studentName} (${idea.grade})</span>
+                </div>
             `;
             container.appendChild(card);
         });
