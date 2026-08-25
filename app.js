@@ -432,9 +432,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // NOMINATION FORM: LOCATION CHIP BUTTON TOGGLE & MATRIX RENDERER
-    const locationBtnGrid = document.getElementById("locationBtnGrid");
-    const locationCategoryInput = document.getElementById("locationCategory");
+    // MULTI-SELECT STATE FOR NOMINATION FORM & QUICK ADD
+    let selectedExpectationsList = []; // [{ pillar, text }]
+    let quickSelectedSkillsList = [];  // [{ pillar, text }]
 
     if (locationBtnGrid) {
         locationBtnGrid.addEventListener("click", (e) => {
@@ -446,6 +446,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             selectedLocation = btn.getAttribute("data-location");
             if (locationCategoryInput) locationCategoryInput.value = selectedLocation;
+            selectedExpectationsList = []; // Reset on location switch for fresh selection
             renderInteractiveLocationMatrix(selectedLocation);
         });
     }
@@ -475,11 +476,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span>${pillarObj.code} - ${pillarObj.shortName}</span>
                 </div>
                 <div class="expectation-buttons-list">
-                    ${items.map(item => `
-                        <button type="button" class="expectation-btn ${selectedExpectation === item ? 'selected' : ''}" data-pillar="${pillarObj.code}" data-text="${item}">
-                            + ${item}
-                        </button>
-                    `).join('')}
+                    ${items.map(item => {
+                        const isSel = selectedExpectationsList.some(s => s.text === item && s.pillar === pillarObj.code);
+                        return `
+                            <button type="button" class="expectation-btn ${isSel ? 'selected' : ''}" data-pillar="${pillarObj.code}" data-text="${item}">
+                                ${isSel ? '✓' : '+'} ${item}
+                            </button>
+                        `;
+                    }).join('')}
                 </div>
             `;
 
@@ -488,30 +492,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
         soarPillarsInteractiveGrid.querySelectorAll(".expectation-btn").forEach(btn => {
             btn.addEventListener("click", () => {
-                soarPillarsInteractiveGrid.querySelectorAll(".expectation-btn").forEach(b => b.classList.remove("selected"));
-                btn.classList.add("selected");
+                const code = btn.getAttribute("data-pillar");
+                const text = btn.getAttribute("data-text");
 
-                selectedPillar = btn.getAttribute("data-pillar");
-                selectedExpectation = btn.getAttribute("data-text");
-
-                if (soarPillarInput) soarPillarInput.value = selectedPillar;
-                if (selectedExpectationInput) selectedExpectationInput.value = selectedExpectation;
-
-                const pName = getPillarFullName(selectedPillar);
-                const currentText = nominationReasonInput ? nominationReasonInput.value.trim() : "";
-
-                const newSnippet = `Demonstrated ${selectedPillar} (${pName}) in the ${location}: "${selectedExpectation}".`;
-
-                if (nominationReasonInput) {
-                    if (!currentText || currentText.startsWith("Demonstrated ")) {
-                        nominationReasonInput.value = newSnippet + " ";
-                    } else if (!currentText.includes(selectedExpectation)) {
-                        nominationReasonInput.value = `${currentText}\n\n[SOAR Expectation]: ${selectedExpectation}`;
-                    }
-                    nominationReasonInput.dispatchEvent(new Event("input"));
+                const existIdx = selectedExpectationsList.findIndex(s => s.text === text && s.pillar === code);
+                if (existIdx >= 0) {
+                    selectedExpectationsList.splice(existIdx, 1);
+                    btn.classList.remove("selected");
+                    btn.textContent = `+ ${text}`;
+                } else {
+                    selectedExpectationsList.push({ pillar: code, text });
+                    btn.classList.add("selected");
+                    btn.textContent = `✓ ${text}`;
                 }
+
+                updateMultiSelectFormContent(location);
             });
         });
+    }
+
+    function updateMultiSelectFormContent(location) {
+        if (selectedExpectationsList.length === 0) {
+            if (soarPillarInput) soarPillarInput.value = "S";
+            if (selectedExpectationInput) selectedExpectationInput.value = "";
+            return;
+        }
+
+        const uniquePillars = Array.from(new Set(selectedExpectationsList.map(s => s.pillar)));
+        if (soarPillarInput) soarPillarInput.value = uniquePillars.join("/");
+        if (selectedExpectationInput) selectedExpectationInput.value = selectedExpectationsList.map(s => s.text).join("; ");
+
+        if (nominationReasonInput) {
+            const skillLines = selectedExpectationsList.map(s => `• [${s.pillar} - ${getPillarFullName(s.pillar)}] ${s.text}`);
+            const autoHeader = `Demonstrated ${uniquePillars.join("/")} S.O.A.R. expectations in the ${location}:`;
+            const autoBody = `${autoHeader}\n${skillLines.join('\n')}`;
+
+            const currentVal = nominationReasonInput.value.trim();
+            if (!currentVal || currentVal.startsWith("Demonstrated ")) {
+                nominationReasonInput.value = autoBody + "\n\nSpecific Story & Impact: ";
+            } else if (!skillLines.some(l => currentVal.includes(l))) {
+                nominationReasonInput.value = `${currentVal}\n\n[Attached SOAR Skills]:\n${skillLines.join('\n')}`;
+            }
+            nominationReasonInput.dispatchEvent(new Event("input"));
+        }
     }
 
     renderInteractiveLocationMatrix("Classroom");
@@ -540,11 +563,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span>${pillarObj.code} - ${pillarObj.shortName}</span>
                 </div>
                 <div class="expectation-buttons-list">
-                    ${items.map(item => `
-                        <button type="button" class="quick-skill-btn ${quickSelectedSkillInput && quickSelectedSkillInput.value === item ? 'selected' : ''}" data-pillar="${pillarObj.code}" data-text="${item}">
-                            + ${item}
-                        </button>
-                    `).join('')}
+                    ${items.map(item => {
+                        const isSel = quickSelectedSkillsList.some(s => s.text === item && s.pillar === pillarObj.code);
+                        return `
+                            <button type="button" class="quick-skill-btn ${isSel ? 'selected' : ''}" data-pillar="${pillarObj.code}" data-text="${item}">
+                                ${isSel ? '✓' : '+'} ${item}
+                            </button>
+                        `;
+                    }).join('')}
                 </div>
             `;
             quickSkillChipsGrid.appendChild(pillarBox);
@@ -552,26 +578,49 @@ document.addEventListener("DOMContentLoaded", () => {
 
         quickSkillChipsGrid.querySelectorAll(".quick-skill-btn").forEach(btn => {
             btn.addEventListener("click", () => {
-                quickSkillChipsGrid.querySelectorAll(".quick-skill-btn").forEach(b => b.classList.remove("selected"));
-                btn.classList.add("selected");
-
                 const code = btn.getAttribute("data-pillar");
                 const text = btn.getAttribute("data-text");
 
-                if (quickSelectedPillarInput) quickSelectedPillarInput.value = code;
-                if (quickSelectedSkillInput) quickSelectedSkillInput.value = text;
+                const existIdx = quickSelectedSkillsList.findIndex(s => s.text === text && s.pillar === code);
+                if (existIdx >= 0) {
+                    quickSelectedSkillsList.splice(existIdx, 1);
+                    btn.classList.remove("selected");
+                    btn.textContent = `+ ${text}`;
+                } else {
+                    quickSelectedSkillsList.push({ pillar: code, text });
+                    btn.classList.add("selected");
+                    btn.textContent = `✓ ${text}`;
+                }
 
                 if (quickSelectedSkillBadge) {
-                    quickSelectedSkillBadge.innerHTML = `✅ Selected Skill: <strong>[${code} - ${getPillarFullName(code)}]</strong> "${text}"`;
-                    quickSelectedSkillBadge.style.background = "#D1FAE5";
-                    quickSelectedSkillBadge.style.borderColor = "#10B981";
-                    quickSelectedSkillBadge.style.color = "#065F46";
+                    if (quickSelectedSkillsList.length === 0) {
+                        if (quickSelectedPillarInput) quickSelectedPillarInput.value = "S";
+                        if (quickSelectedSkillInput) quickSelectedSkillInput.value = "";
+                        quickSelectedSkillBadge.innerHTML = `Selected Skills: <em>(Click 1 or more SOAR skill buttons above)</em>`;
+                        quickSelectedSkillBadge.style.background = "#F8FAFC";
+                        quickSelectedSkillBadge.style.borderColor = "#E2E8F0";
+                        quickSelectedSkillBadge.style.color = "#64748B";
+                    } else {
+                        const uniquePillars = Array.from(new Set(quickSelectedSkillsList.map(s => s.pillar))).join("/");
+                        const skillsSummary = quickSelectedSkillsList.map(s => `[${s.pillar}] "${s.text}"`).join("; ");
+
+                        if (quickSelectedPillarInput) quickSelectedPillarInput.value = uniquePillars;
+                        if (quickSelectedSkillInput) quickSelectedSkillInput.value = skillsSummary;
+
+                        quickSelectedSkillBadge.innerHTML = `✅ Selected (${quickSelectedSkillsList.length} Skills): <strong>${skillsSummary}</strong>`;
+                        quickSelectedSkillBadge.style.background = "#D1FAE5";
+                        quickSelectedSkillBadge.style.borderColor = "#10B981";
+                        quickSelectedSkillBadge.style.color = "#065F46";
+                    }
                 }
             });
         });
     }
 
-    if (quickLocation) quickLocation.addEventListener("change", renderQuickSkillChips);
+    if (quickLocation) quickLocation.addEventListener("change", () => {
+        quickSelectedSkillsList = []; // Reset on location switch
+        renderQuickSkillChips();
+    });
     renderQuickSkillChips();
 
     // Alignment & Bias / Deficit Language Checker
@@ -708,6 +757,7 @@ document.addEventListener("DOMContentLoaded", () => {
             alert(`🎉 Thank you ${nominatorName}! Nomination for ${studentName} submitted successfully.`);
             nominationForm.reset();
             selectedExpectation = "";
+            selectedExpectationsList = [];
             renderInteractiveLocationMatrix("Classroom");
             if (nominationReasonInput) nominationReasonInput.dispatchEvent(new Event("input"));
         });
@@ -750,8 +800,9 @@ document.addEventListener("DOMContentLoaded", () => {
             if (typeof confetti === "function") confetti({ particleCount: 50, origin: { y: 0.6 } });
             alert(`⚡ Quick nomination submitted for ${studentName}!`);
             quickAddForm.reset();
+            quickSelectedSkillsList = [];
             if (quickSelectedSkillInput) quickSelectedSkillInput.value = "";
-            if (quickSelectedSkillBadge) quickSelectedSkillBadge.innerHTML = `Selected Skill: <em>(Click a SOAR skill button above)</em>`;
+            if (quickSelectedSkillBadge) quickSelectedSkillBadge.innerHTML = `Selected Skills: <em>(Click 1 or more SOAR skill buttons above)</em>`;
             renderQuickSkillChips();
         });
     }
@@ -803,6 +854,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function getPillarFullName(code) {
+        if (!code) return "SOAR Expectation";
+        if (code.includes("/") || code.includes(",")) {
+            const parts = code.split(/[\/,]/).map(p => p.trim());
+            return parts.map(p => getPillarFullName(p)).join(", ");
+        }
         switch(code) {
             case "S": return "Show Respect";
             case "O": return "Own Your Learning & Behavior";
