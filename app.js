@@ -3,7 +3,10 @@ document.addEventListener("DOMContentLoaded", () => {
     
     // State Management
     let currentLang = "en";
-    let nominations = JSON.parse(localStorage.getItem("ecms_soar_nominations")) || INITIAL_NOMINATIONS;
+    let rawNominations = JSON.parse(localStorage.getItem("ecms_soar_nominations")) || INITIAL_NOMINATIONS;
+    // Clear out rejected nominations and keep approved/pending nominations
+    let nominations = rawNominations.filter(n => n.status !== "Rejected");
+    localStorage.setItem("ecms_soar_nominations", JSON.stringify(nominations));
     let storedPasscode = localStorage.getItem("ecms_soar_dean_passcode") || "SOAR2026";
     let storedTeacherPasscode = localStorage.getItem("ecms_soar_teacher_passcode") || "CARDINALS";
 
@@ -432,6 +435,10 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    // NOMINATION FORM: LOCATION CHIP BUTTON TOGGLE & MATRIX RENDERER
+    const locationBtnGrid = document.getElementById("locationBtnGrid");
+    const locationCategoryInput = document.getElementById("locationCategory");
+
     // MULTI-SELECT STATE FOR NOMINATION FORM & QUICK ADD
     let selectedExpectationsList = []; // [{ pillar, text }]
     let quickSelectedSkillsList = [];  // [{ pillar, text }]
@@ -515,6 +522,10 @@ document.addEventListener("DOMContentLoaded", () => {
         if (selectedExpectationsList.length === 0) {
             if (soarPillarInput) soarPillarInput.value = "S";
             if (selectedExpectationInput) selectedExpectationInput.value = "";
+            if (nominationReasonInput && nominationReasonInput.value.startsWith("Demonstrated ")) {
+                nominationReasonInput.value = "";
+                nominationReasonInput.dispatchEvent(new Event("input"));
+            }
             return;
         }
 
@@ -1119,6 +1130,22 @@ document.addEventListener("DOMContentLoaded", () => {
             renderModerationQueue();
             renderSotmLeaderboard();
             alert(`Approved ${count} high-quality pending nominations!`);
+        });
+    }
+
+    const clearRejectedBtn = document.getElementById("clearRejectedBtn");
+    if (clearRejectedBtn) {
+        clearRejectedBtn.addEventListener("click", () => {
+            if (!isDeanAuthenticated) return;
+            const beforeCount = nominations.length;
+            nominations = nominations.filter(n => n.status !== "Rejected");
+            saveState();
+            renderModerationQueue();
+            renderSotmLeaderboard();
+            renderSlideDeck();
+            renderTicketsGrid();
+            const removed = beforeCount - nominations.length;
+            alert(removed > 0 ? `🧹 Cleared ${removed} rejected nominations!` : "No rejected nominations found.");
         });
     }
 
