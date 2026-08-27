@@ -590,14 +590,20 @@
                             </div>
                         </div>
 
-                        <div class="filter-group right">
+                        <div class="filter-group right" style="display:flex; align-items:center; gap:0.75rem;">
                             <input type="text" id="adminSearchInput" placeholder="Search student name, teacher, or keyword..." class="search-input">
+                            <div class="view-mode-toggles">
+                                <button type="button" class="view-toggle-btn active" id="viewModeTileBtn" title="Tile / Grid View">🎴 Tile View</button>
+                                <button type="button" class="view-toggle-btn" id="viewModeListBtn" title="Compact Table List View">☰ List View</button>
+                            </div>
                         </div>
                     </div>
 
+                    <div id="rejectedBannerContainer"></div>
+
                     <div class="moderation-container">
                         <div id="nominationList" class="nomination-cards-grid">
-                            <!-- Dynamic cards -->
+                            <!-- Dynamic cards or table list -->
                         </div>
                     </div>
                 </div>

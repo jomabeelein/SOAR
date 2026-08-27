@@ -1011,10 +1011,31 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    // DEAN MODERATION HUB
+    // DEAN MODERATION HUB & VIEW MODE (Tile vs List)
     let currentAdminFilter = "all";
+    let adminViewMode = "tile"; // "tile" or "list"
+
     const nominationList = document.getElementById("nominationList");
     const adminSearchInput = document.getElementById("adminSearchInput");
+    const viewModeTileBtn = document.getElementById("viewModeTileBtn");
+    const viewModeListBtn = document.getElementById("viewModeListBtn");
+    const rejectedBannerContainer = document.getElementById("rejectedBannerContainer");
+
+    if (viewModeTileBtn && viewModeListBtn) {
+        viewModeTileBtn.addEventListener("click", () => {
+            adminViewMode = "tile";
+            viewModeTileBtn.classList.add("active");
+            viewModeListBtn.classList.remove("active");
+            renderModerationQueue();
+        });
+
+        viewModeListBtn.addEventListener("click", () => {
+            adminViewMode = "list";
+            viewModeListBtn.classList.add("active");
+            viewModeTileBtn.classList.remove("active");
+            renderModerationQueue();
+        });
+    }
 
     document.querySelectorAll("[data-filter-status]").forEach(pill => {
         pill.addEventListener("click", () => {
@@ -1027,9 +1048,43 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (adminSearchInput) adminSearchInput.addEventListener("input", renderModerationQueue);
 
+    window.clearAllRejectedNominations = function() {
+        if (!isDeanAuthenticated) return;
+        const beforeCount = nominations.length;
+        nominations = nominations.filter(n => n.status !== "Rejected");
+        saveState();
+        renderModerationQueue();
+        renderSotmLeaderboard();
+        renderSlideDeck();
+        renderTicketsGrid();
+        const removed = beforeCount - nominations.length;
+        alert(removed > 0 ? `🧹 Successfully cleared ${removed} rejected nominations!` : "No rejected nominations found.");
+    };
+
     function renderModerationQueue() {
         if (!nominationList || !isDeanAuthenticated) return;
         nominationList.innerHTML = "";
+
+        const rejectedCount = nominations.filter(n => n.status === "Rejected").length;
+        if (rejectedBannerContainer) {
+            if (currentAdminFilter === "Rejected" || (rejectedCount > 0 && currentAdminFilter === "all")) {
+                rejectedBannerContainer.style.display = "block";
+                rejectedBannerContainer.innerHTML = `
+                    <div class="clear-rejected-banner">
+                        <div>
+                            <h4>🚫 Rejected Nominations Queue (${rejectedCount})</h4>
+                            <p>Clear out all rejected submissions to keep your database clean and focused on positive recognitions.</p>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" style="background:#DC2626; border:none;" onclick="clearAllRejectedNominations()">
+                            🧹 Clear All ${rejectedCount} Rejected Entries Now
+                        </button>
+                    </div>
+                `;
+            } else {
+                rejectedBannerContainer.style.display = "none";
+                rejectedBannerContainer.innerHTML = "";
+            }
+        }
 
         const query = adminSearchInput ? adminSearchInput.value.toLowerCase().trim() : "";
 
@@ -1046,6 +1101,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         if (filtered.length === 0) {
+            nominationList.className = "nomination-cards-grid";
             nominationList.innerHTML = `
                 <div class="empty-queue" style="grid-column: 1/-1; text-align: center; padding: 3rem; background: white; border-radius: 12px;">
                     <p style="font-size: 1.2rem; font-weight: 700; color: #475569;">No nominations match your current filter.</p>
@@ -1054,52 +1110,133 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        filtered.forEach(nom => {
-            const similarityMatch = !nom.dismissedSimilarityFlag ? findSimilarStudentProfiles(nom.studentName, nom.id) : null;
-
-            const card = document.createElement("div");
-            card.className = `nom-card pillar-${nom.pillar}`;
-            card.innerHTML = `
-                <div class="nom-card-header">
-                    <div>
-                        <div class="student-title">${nom.studentName}</div>
-                        <div class="nom-meta">${nom.grade} • Nominated by <strong>${nom.nominatorName}</strong> (${nom.nominatorRole})</div>
-                    </div>
-                    <span class="status-badge ${nom.status.replace(/\s+/g, '-')}">${nom.status}</span>
-                </div>
-
-                ${similarityMatch ? `
-                    <div class="duplicate-flag-banner">
-                        ⚠️ <strong>Name Similarity Alert:</strong> Is this the same student as <strong>"${similarityMatch.masterName}"</strong> (${similarityMatch.grade} • ${similarityMatch.count} nominations)?
-                        <div style="margin-top:0.4rem; display:flex; gap:0.4rem;">
-                            <button class="btn btn-sm btn-secondary" onclick="mergeStudentName('${nom.id}', '${similarityMatch.masterName}')">🔗 Merge to "${similarityMatch.masterName}"</button>
-                            <button class="btn btn-sm btn-ghost" onclick="dismissSimilarityFlag('${nom.id}')">Keep Separate</button>
-                        </div>
-                    </div>
-                ` : ''}
-
-                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                    <span class="prompt-chip" style="background:#0F172A; color:#FFF;">${nom.pillar} - ${nom.pillarName}</span>
-                    <span class="prompt-chip">📍 ${nom.location}</span>
-                    <span class="prompt-chip" style="border-color:${nom.alignmentScore==='High'?'#10B981':(nom.alignmentScore==='Low'?'#EF4444':'#F59E0B')}">
-                        Quality: ${nom.alignmentScore}
-                    </span>
-                </div>
-
-                <div class="nom-reason-box">
-                    "${nom.reason}"
-                </div>
-
-                ${nom.adminNote ? `<div style="font-size: 0.78rem; color: #991B1B; background: #FEE2E2; padding: 0.4rem 0.6rem; border-radius: 4px; margin-bottom: 0.75rem;"><strong>Admin Note:</strong> ${nom.adminNote}</div>` : ''}
-
-                <div class="admin-card-actions">
-                    ${nom.status !== 'Approved' ? `<button class="btn btn-primary btn-sm" onclick="updateNomStatus('${nom.id}', 'Approved')">✅ Approve</button>` : ''}
-                    <button class="btn btn-ghost btn-sm" onclick="openEditModal('${nom.id}')">✏️ Edit Wording</button>
-                    ${nom.status !== 'Rejected' ? `<button class="btn btn-ghost btn-sm" style="color:#EF4444;" onclick="updateNomStatus('${nom.id}', 'Rejected')">❌ Reject</button>` : ''}
-                </div>
+        if (adminViewMode === "list") {
+            // LIST VIEW (TABLE)
+            nominationList.className = "nomination-list-table-wrapper";
+            
+            let tableHtml = `
+                <table class="nomination-list-table">
+                    <thead>
+                        <tr>
+                            <th>Student & Grade</th>
+                            <th>Nominator</th>
+                            <th>SOAR Pillar & Location</th>
+                            <th>Reason / Story</th>
+                            <th>Quality</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
-            nominationList.appendChild(card);
-        });
+
+            filtered.forEach(nom => {
+                const similarityMatch = !nom.dismissedSimilarityFlag ? findSimilarStudentProfiles(nom.studentName, nom.id) : null;
+                const statusColor = nom.status === 'Approved' ? '#065F46' : (nom.status === 'Rejected' ? '#991B1B' : '#92400E');
+                const statusBg = nom.status === 'Approved' ? '#D1FAE5' : (nom.status === 'Rejected' ? '#FEE2E2' : '#FEF3C7');
+
+                tableHtml += `
+                    <tr>
+                        <td>
+                            <strong>${nom.studentName}</strong>
+                            <div style="font-size:0.75rem; color:#64748B;">${nom.grade}</div>
+                            ${similarityMatch ? `
+                                <div style="font-size:0.72rem; color:#D97706; font-weight:700; margin-top:0.2rem;">
+                                    ⚠️ Similar to ${similarityMatch.masterName}
+                                    <button class="btn btn-sm btn-ghost" style="padding:0.1rem 0.3rem; font-size:0.68rem;" onclick="mergeStudentName('${nom.id}', '${similarityMatch.masterName}')">Merge</button>
+                                </div>
+                            ` : ''}
+                        </td>
+                        <td>
+                            <div>${nom.nominatorName}</div>
+                            <div style="font-size:0.75rem; color:#64748B;">${nom.nominatorRole}</div>
+                        </td>
+                        <td>
+                            <span class="prompt-chip" style="background:#0F172A; color:#FFF; font-size:0.72rem;">${nom.pillar}</span>
+                            <div style="font-size:0.75rem; color:#475569; margin-top:0.2rem;">📍 ${nom.location}</div>
+                        </td>
+                        <td style="max-width:300px;">
+                            <div style="font-size:0.8rem; line-height:1.4; color:#334155;">"${nom.reason.length > 110 ? nom.reason.substr(0, 110) + '...' : nom.reason}"</div>
+                            ${nom.adminNote ? `<div style="font-size:0.72rem; color:#991B1B; margin-top:0.2rem;">Note: ${nom.adminNote}</div>` : ''}
+                        </td>
+                        <td>
+                            <span class="prompt-chip" style="border-color:${nom.alignmentScore==='High'?'#10B981':(nom.alignmentScore==='Low'?'#EF4444':'#F59E0B')}; font-size:0.72rem;">
+                                ${nom.alignmentScore}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="status-badge" style="background:${statusBg}; color:${statusColor}; font-size:0.72rem;">
+                                ${nom.status}
+                            </span>
+                        </td>
+                        <td style="white-space:nowrap;">
+                            <div style="display:flex; gap:0.3rem;">
+                                ${nom.status !== 'Approved' ? `<button class="btn btn-primary btn-sm" style="padding:0.25rem 0.55rem; font-size:0.75rem;" onclick="updateNomStatus('${nom.id}', 'Approved')">✅</button>` : ''}
+                                <button class="btn btn-ghost btn-sm" style="padding:0.25rem 0.55rem; font-size:0.75rem;" onclick="openEditModal('${nom.id}')">✏️</button>
+                                ${nom.status !== 'Rejected' ? `<button class="btn btn-ghost btn-sm" style="padding:0.25rem 0.55rem; font-size:0.75rem; color:#EF4444;" onclick="updateNomStatus('${nom.id}', 'Rejected')">❌</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+
+            nominationList.innerHTML = tableHtml;
+        } else {
+            // TILE VIEW (CARDS GRID)
+            nominationList.className = "nomination-cards-grid";
+
+            filtered.forEach(nom => {
+                const similarityMatch = !nom.dismissedSimilarityFlag ? findSimilarStudentProfiles(nom.studentName, nom.id) : null;
+
+                const card = document.createElement("div");
+                card.className = `nom-card pillar-${nom.pillar}`;
+                card.innerHTML = `
+                    <div class="nom-card-header">
+                        <div>
+                            <div class="student-title">${nom.studentName}</div>
+                            <div class="nom-meta">${nom.grade} • Nominated by <strong>${nom.nominatorName}</strong> (${nom.nominatorRole})</div>
+                        </div>
+                        <span class="status-badge ${nom.status.replace(/\s+/g, '-')}">${nom.status}</span>
+                    </div>
+
+                    ${similarityMatch ? `
+                        <div class="duplicate-flag-banner">
+                            ⚠️ <strong>Name Similarity Alert:</strong> Is this the same student as <strong>"${similarityMatch.masterName}"</strong> (${similarityMatch.grade} • ${similarityMatch.count} nominations)?
+                            <div style="margin-top:0.4rem; display:flex; gap:0.4rem;">
+                                <button class="btn btn-sm btn-secondary" onclick="mergeStudentName('${nom.id}', '${similarityMatch.masterName}')">🔗 Merge to "${similarityMatch.masterName}"</button>
+                                <button class="btn btn-sm btn-ghost" onclick="dismissSimilarityFlag('${nom.id}')">Keep Separate</button>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                        <span class="prompt-chip" style="background:#0F172A; color:#FFF;">${nom.pillar} - ${nom.pillarName}</span>
+                        <span class="prompt-chip">📍 ${nom.location}</span>
+                        <span class="prompt-chip" style="border-color:${nom.alignmentScore==='High'?'#10B981':(nom.alignmentScore==='Low'?'#EF4444':'#F59E0B')}">
+                            Quality: ${nom.alignmentScore}
+                        </span>
+                    </div>
+
+                    <div class="nom-reason-box">
+                        "${nom.reason}"
+                    </div>
+
+                    ${nom.adminNote ? `<div style="font-size: 0.78rem; color: #991B1B; background: #FEE2E2; padding: 0.4rem 0.6rem; border-radius: 4px; margin-bottom: 0.75rem;"><strong>Admin Note:</strong> ${nom.adminNote}</div>` : ''}
+
+                    <div class="admin-card-actions">
+                        ${nom.status !== 'Approved' ? `<button class="btn btn-primary btn-sm" onclick="updateNomStatus('${nom.id}', 'Approved')">✅ Approve</button>` : ''}
+                        <button class="btn btn-ghost btn-sm" onclick="openEditModal('${nom.id}')">✏️ Edit Wording</button>
+                        ${nom.status !== 'Rejected' ? `<button class="btn btn-ghost btn-sm" style="color:#EF4444;" onclick="updateNomStatus('${nom.id}', 'Rejected')">❌ Reject</button>` : ''}
+                    </div>
+                `;
+                nominationList.appendChild(card);
+            });
+        }
     }
 
     window.updateNomStatus = function(id, newStatus) {
