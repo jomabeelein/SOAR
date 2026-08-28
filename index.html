@@ -322,6 +322,55 @@
                 </div>
 
             </div>
+
+            <!-- Student Reward Request / Redemption Form -->
+            <div class="form-card" style="border: 2px solid #0D9488; margin-top:1.5rem;">
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                    <span style="font-size:2rem;">🎟️</span>
+                    <div>
+                        <h3 style="margin:0; color:var(--slate-900);">Submit a Reward Request / Redemption Form</h3>
+                        <p style="font-size:0.85rem; color:var(--slate-600); margin:0;">Turn in your earned SOAR Bucks to request a book vending token, Cricut swag crafting, or guest announcer spot!</p>
+                    </div>
+                </div>
+
+                <form id="rewardRequestForm">
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="reqStudentName">Student Name: <span class="required">*</span></label>
+                            <input type="text" id="reqStudentName" placeholder="e.g. Mateo Fernandez" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reqGrade">Grade Level: <span class="required">*</span></label>
+                            <select id="reqGrade" required>
+                                <option value="6th Grade">6th Grade</option>
+                                <option value="7th Grade">7th Grade</option>
+                                <option value="8th Grade">8th Grade</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row two-col">
+                        <div class="form-group">
+                            <label for="reqRewardSelect">Select Approved Reward: <span class="required">*</span></label>
+                            <select id="reqRewardSelect" required>
+                                <option value="Token to Ms. Kurland's Book Vending Machine (5 SOAR Bucks)">📚 Token to Ms. Kurland's Book Vending Machine (5 SOAR Bucks)</option>
+                                <option value="Make Your Own Swag using the Cricut (10 SOAR Bucks)">🎨 Make Your Own Swag using the Cricut (10 SOAR Bucks)</option>
+                                <option value="Guest Morning Announcer on Intercom (15 SOAR Bucks)">🎙️ Guest Morning Announcer on Intercom (15 SOAR Bucks)</option>
+                                <option value="Front of Lunch Line Pass (5 SOAR Bucks)">🥪 Front of Lunch Line Pass (5 SOAR Bucks)</option>
+                                <option value="Friday DJ Lunch Song Request (5 SOAR Bucks)">🎧 Friday DJ Lunch Song Request (5 SOAR Bucks)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reqStaffTeacher">Homeroom / Advisory Teacher: <span class="required">*</span></label>
+                            <input type="text" id="reqStaffTeacher" placeholder="e.g. Ms. Alvarez" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" style="width:100%; background:#0D9488; border:none;">
+                        🎟️ Submit Reward Request to Deans
+                    </button>
+                </form>
+            </div>
         </section>
 
         <!-- ==================== PUBLIC TAB 3: SOAR MATRIX REFERENCE ==================== -->

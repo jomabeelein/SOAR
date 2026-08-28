@@ -310,6 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const newIdea = {
                 id: `idea-${Date.now()}`,
+                type: "reward_idea",
                 studentName,
                 grade,
                 title,
@@ -321,11 +322,50 @@ document.addEventListener("DOMContentLoaded", () => {
 
             rewardIdeas.unshift(newIdea);
             saveState();
+            syncNominationToCloud(newIdea);
 
             if (typeof confetti === "function") confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
 
             alert(`💡 Thank you! Your reward idea "${title}" has been sent directly to the Deans & Admin team for store approval!`);
             rewardIdeaForm.reset();
+        });
+    }
+
+    // STUDENT REWARD REQUEST / REDEMPTION FORM
+    const rewardRequestForm = document.getElementById("rewardRequestForm");
+    if (rewardRequestForm) {
+        rewardRequestForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const studentName = document.getElementById("reqStudentName").value.trim();
+            const grade = document.getElementById("reqGrade").value;
+            const rewardChoice = document.getElementById("reqRewardSelect").value;
+            const teacher = document.getElementById("reqStaffTeacher").value.trim();
+
+            const newRequest = {
+                id: `req-${Date.now()}`,
+                type: "reward_request",
+                studentName,
+                grade,
+                nominatorName: teacher,
+                nominatorRole: "Advisory Teacher",
+                pillar: "STORE",
+                pillarName: "SOAR Store Redemption",
+                location: "Rewards Store",
+                reason: `[REWARD REDEMPTION REQUEST]: ${rewardChoice}. Homeroom Teacher: ${teacher}`,
+                alignmentScore: "High",
+                status: "Pending",
+                adminNote: "Reward Redemption Request",
+                date: new Date().toISOString().split("T")[0]
+            };
+
+            nominations.unshift(newRequest);
+            saveState();
+            syncNominationToCloud(newRequest);
+
+            if (typeof confetti === "function") confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
+
+            alert(`🎟️ Reward request for "${rewardChoice}" submitted to Deans for verification!`);
+            rewardRequestForm.reset();
         });
     }
 
@@ -429,7 +469,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const target = rewardIdeas.find(i => i.id === id);
         if (target) {
             target.status = newStatus;
+            target.type = "reward_idea";
             saveState();
+            syncNominationToCloud(target);
             renderRewardIdeasQueue();
             renderApprovedRewardStore();
         }
@@ -2375,16 +2417,32 @@ document.addEventListener("DOMContentLoaded", () => {
     function mergeNominationsList(newItems) {
         let addedCount = 0;
         newItems.forEach(item => {
-            if (!item.id || !item.studentName) return;
-            const exists = nominations.some(n => n.id === item.id || (n.studentName === item.studentName && n.reason === item.reason));
-            if (!exists) {
-                nominations.unshift(item);
-                addedCount++;
+            if (!item.id) return;
+            if (item.type === "reward_idea" || item.id.startsWith("idea-")) {
+                const exists = rewardIdeas.some(r => r.id === item.id || (r.title === item.title && r.studentName === item.studentName));
+                if (!exists) {
+                    rewardIdeas.unshift(item);
+                    addedCount++;
+                } else {
+                    const target = rewardIdeas.find(r => r.id === item.id);
+                    if (target && target.status !== item.status) {
+                        target.status = item.status;
+                        addedCount++;
+                    }
+                }
+            } else if (item.studentName) {
+                const exists = nominations.some(n => n.id === item.id || (n.studentName === item.studentName && n.reason === item.reason));
+                if (!exists) {
+                    nominations.unshift(item);
+                    addedCount++;
+                }
             }
         });
         if (addedCount > 0) {
             saveState();
             renderModerationQueue();
+            renderRewardIdeasQueue();
+            renderApprovedRewardStore();
             renderSotmLeaderboard();
             renderSlideDeck();
             renderTicketsGrid();
