@@ -2318,7 +2318,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const masterSheetUrlInput = document.getElementById("masterSheetUrlInput");
 
     const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyH3f4BuvVC_0Ynd_j9HVjlsmn5Dw1nY_OhYcPYcZLtJrKQO1uDAzQaCrXzWMNmkuo1SA/exec";
-    const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/";
+    const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1jMWKIKLflSM6iopSMgHgjLHEzeOXpgnyg-lWh1cbsmg/edit?usp=sharing";
 
     let cloudWebhookUrl = localStorage.getItem("ecms_soar_cloud_webhook") || DEFAULT_WEBHOOK_URL;
     let masterSheetUrl = localStorage.getItem("ecms_soar_sheet_url") || DEFAULT_SHEET_URL;
