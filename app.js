@@ -2321,7 +2321,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/d/1jMWKIKLflSM6iopSMgHgjLHEzeOXpgnyg-lWh1cbsmg/edit?usp=sharing";
 
     let cloudWebhookUrl = localStorage.getItem("ecms_soar_cloud_webhook") || DEFAULT_WEBHOOK_URL;
-    let masterSheetUrl = localStorage.getItem("ecms_soar_sheet_url") || DEFAULT_SHEET_URL;
+    let masterSheetUrl = localStorage.getItem("ecms_soar_sheet_url");
+    if (!masterSheetUrl || masterSheetUrl === "https://docs.google.com/spreadsheets/") {
+        masterSheetUrl = DEFAULT_SHEET_URL;
+        localStorage.setItem("ecms_soar_sheet_url", DEFAULT_SHEET_URL);
+    }
 
     if (cloudWebhookUrlInput) cloudWebhookUrlInput.value = cloudWebhookUrl;
     if (masterSheetUrlInput) masterSheetUrlInput.value = masterSheetUrl;
