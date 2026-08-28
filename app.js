@@ -2246,7 +2246,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const importJsonTextInput = document.getElementById("importJsonTextInput");
     const exportDeviceNominationsBtn = document.getElementById("exportDeviceNominationsBtn");
 
-    let cloudWebhookUrl = localStorage.getItem("ecms_soar_cloud_webhook") || "";
+    const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyH3f4BuvVC_0Ynd_j9HVjlsmn5Dw1nY_OhYcPYcZLtJrKQO1uDAzQaCrXzWMNmkuo1SA/exec";
+    let cloudWebhookUrl = localStorage.getItem("ecms_soar_cloud_webhook") || DEFAULT_WEBHOOK_URL;
     if (cloudWebhookUrlInput) cloudWebhookUrlInput.value = cloudWebhookUrl;
 
     function openCloudSyncModal() {
@@ -2263,10 +2264,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (saveCloudSyncBtn) {
         saveCloudSyncBtn.addEventListener("click", () => {
-            const url = cloudWebhookUrlInput.value.trim();
+            const url = cloudWebhookUrlInput.value.trim() || DEFAULT_WEBHOOK_URL;
             cloudWebhookUrl = url;
             localStorage.setItem("ecms_soar_cloud_webhook", url);
-            alert(url ? "✅ Cloud Webhook URL saved! Submissions will now sync live to your cloud endpoint." : "Cloud Webhook disabled.");
+            alert(url ? "✅ Master Cloud Webhook URL saved! Submissions will now sync live across all devices." : "Cloud Webhook disabled.");
             if (url) fetchRemoteCloudNominations();
         });
     }
@@ -2277,7 +2278,7 @@ document.addEventListener("DOMContentLoaded", () => {
             fetch(cloudWebhookUrl, {
                 method: "POST",
                 mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "text/plain" },
                 body: JSON.stringify(nominationObj)
             }).catch(err => console.log("Cloud sync note:", err));
         } catch(e) {
@@ -2290,10 +2291,11 @@ document.addEventListener("DOMContentLoaded", () => {
         fetch(cloudWebhookUrl)
             .then(res => res.json())
             .then(remoteItems => {
-                if (Array.isArray(remoteItems)) {
-                    mergeNominationsList(remoteItems);
+                const items = Array.isArray(remoteItems) ? remoteItems : (remoteItems.data || remoteItems.nominations || []);
+                if (Array.isArray(items) && items.length > 0) {
+                    mergeNominationsList(items);
                 }
-            }).catch(e => console.log("Cloud fetch error:", e));
+            }).catch(e => console.log("Cloud fetch note:", e));
     }
 
     function mergeNominationsList(newItems) {
