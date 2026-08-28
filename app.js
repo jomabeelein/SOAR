@@ -2353,6 +2353,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    const testCloudSyncBtn = document.getElementById("testCloudSyncBtn");
+    if (testCloudSyncBtn) {
+        testCloudSyncBtn.addEventListener("click", () => {
+            const testNom = {
+                id: `test-${Date.now()}`,
+                type: "nomination",
+                studentName: "TEST CARDINAL STUDENT",
+                grade: "7th Grade",
+                nominatorName: "System Test",
+                nominatorRole: "System Test",
+                pillar: "S",
+                pillarName: "Show Respect",
+                location: "Classroom",
+                reason: "System connectivity test nomination from Dean Portal.",
+                alignmentScore: "High",
+                status: "Pending",
+                date: new Date().toISOString().split("T")[0]
+            };
+            syncNominationToCloud(testNom);
+            alert("⚡ Sent a test row to your Google Sheet! Check your Google Sheet in 3 seconds.");
+        });
+    }
+
     // OFFLINE OUTBOX QUEUE & AUTO-RETRY SYNC ENGINE
     let pendingOutbox = JSON.parse(localStorage.getItem("ecms_soar_outbox_queue")) || [];
 
