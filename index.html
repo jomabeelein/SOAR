@@ -547,6 +547,9 @@
                         <p>Approve nominations, resolve duplicate student spelling flags, select Students of the Month, review student reward ideas, print bilingual certificates, and present slide decks.</p>
                     </div>
                     <div class="admin-actions-top">
+                        <a id="openMasterSheetBtn" href="https://docs.google.com/spreadsheets/" target="_blank" rel="noopener" class="btn btn-primary" style="background:#0F9D58; border:none; text-decoration:none; display:inline-flex; align-items:center; gap:0.4rem;">
+                            📊 Open Master Google Sheet
+                        </a>
                         <button id="lockHubNowBtn" class="btn btn-ghost" style="border-color:#EF4444; color:#EF4444;">
                             🔒 Lock Session
                         </button>
@@ -1035,11 +1038,15 @@
                 </div>
 
                 <div style="border-top:1px solid #E2E8F0; padding-top:1rem;">
-                    <h4 style="font-size:0.95rem; color:#0F172A; margin-bottom:0.5rem;">Option 1: Live Cloud Webhook Sync (Google Sheets / API Endpoint)</h4>
-                    <p style="font-size:0.8rem; color:#64748B; margin-bottom:0.75rem;">Enter a Google Apps Script Webhook URL or Cloud API endpoint to auto-sync all nominations live from any device to your Dean screen:</p>
-                    <input type="url" id="cloudWebhookUrlInput" placeholder="https://script.google.com/macros/s/... (Google Sheet Webhook URL)" class="input-styled" style="font-size:0.85rem;">
-                    <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
-                        <button id="saveCloudSyncBtn" class="btn btn-primary btn-sm">💾 Save Cloud Endpoint & Sync Live</button>
+                    <h4 style="font-size:0.95rem; color:#0F172A; margin-bottom:0.5rem;">Option 1: Live Cloud Webhook Sync & Master Spreadsheet Link</h4>
+                    <p style="font-size:0.8rem; color:#64748B; margin-bottom:0.5rem;">Master Google Apps Script Webhook API URL:</p>
+                    <input type="url" id="cloudWebhookUrlInput" placeholder="https://script.google.com/macros/s/... (Google Sheet Webhook URL)" class="input-styled" style="font-size:0.85rem; margin-bottom:0.75rem;">
+                    
+                    <p style="font-size:0.8rem; color:#64748B; margin-bottom:0.5rem;">Direct Google Sheets Link (For 1-click top button):</p>
+                    <input type="url" id="masterSheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." class="input-styled" style="font-size:0.85rem;">
+
+                    <div style="display:flex; gap:0.5rem; margin-top:0.75rem;">
+                        <button id="saveCloudSyncBtn" class="btn btn-primary btn-sm">💾 Save Cloud Endpoint & Links</button>
                     </div>
                 </div>
 

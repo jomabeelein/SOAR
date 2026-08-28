@@ -464,6 +464,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedExpectationInput = document.getElementById("selectedExpectationText");
     const nominationReasonInput = document.getElementById("nominationReason");
 
+    function getSpanishLocation(loc) {
+        const map = {
+            "Classroom": "Salón de clases",
+            "Hallway": "Pasillo",
+            "Cafeteria": "Cafetería",
+            "Bathroom": "Baño",
+            "Office": "Oficina",
+            "Stairwell": "Escaleras",
+            "Assemblies": "Asambleas",
+            "Technology": "Tecnología"
+        };
+        return map[loc] || loc;
+    }
+
     function renderInteractiveLocationMatrix(location) {
         if (!soarPillarsInteractiveGrid) return;
         soarPillarsInteractiveGrid.innerHTML = "";
@@ -761,6 +775,18 @@ document.addEventListener("DOMContentLoaded", () => {
             nominations.unshift(newNomination);
             saveState();
             syncNominationToCloud(newNomination);
+
+            // Submit Button Debounce Protection
+            const submitBtn = nominationForm.querySelector("button[type='submit']");
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                const origText = submitBtn.innerHTML;
+                submitBtn.innerHTML = "⏳ Submitting...";
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = origText;
+                }, 1200);
+            }
 
             if (typeof confetti === "function" && analysis.score === "High") {
                 confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
@@ -2246,9 +2272,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const importJsonTextInput = document.getElementById("importJsonTextInput");
     const exportDeviceNominationsBtn = document.getElementById("exportDeviceNominationsBtn");
 
+    const openMasterSheetBtn = document.getElementById("openMasterSheetBtn");
+    const masterSheetUrlInput = document.getElementById("masterSheetUrlInput");
+
     const DEFAULT_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyH3f4BuvVC_0Ynd_j9HVjlsmn5Dw1nY_OhYcPYcZLtJrKQO1uDAzQaCrXzWMNmkuo1SA/exec";
+    const DEFAULT_SHEET_URL = "https://docs.google.com/spreadsheets/";
+
     let cloudWebhookUrl = localStorage.getItem("ecms_soar_cloud_webhook") || DEFAULT_WEBHOOK_URL;
+    let masterSheetUrl = localStorage.getItem("ecms_soar_sheet_url") || DEFAULT_SHEET_URL;
+
     if (cloudWebhookUrlInput) cloudWebhookUrlInput.value = cloudWebhookUrl;
+    if (masterSheetUrlInput) masterSheetUrlInput.value = masterSheetUrl;
+    if (openMasterSheetBtn) openMasterSheetBtn.href = masterSheetUrl;
 
     function openCloudSyncModal() {
         if (cloudSyncModal) cloudSyncModal.classList.add("open");
@@ -2265,25 +2300,51 @@ document.addEventListener("DOMContentLoaded", () => {
     if (saveCloudSyncBtn) {
         saveCloudSyncBtn.addEventListener("click", () => {
             const url = cloudWebhookUrlInput.value.trim() || DEFAULT_WEBHOOK_URL;
+            const sheetUrl = (masterSheetUrlInput && masterSheetUrlInput.value.trim()) || DEFAULT_SHEET_URL;
             cloudWebhookUrl = url;
+            masterSheetUrl = sheetUrl;
             localStorage.setItem("ecms_soar_cloud_webhook", url);
-            alert(url ? "✅ Master Cloud Webhook URL saved! Submissions will now sync live across all devices." : "Cloud Webhook disabled.");
+            localStorage.setItem("ecms_soar_sheet_url", sheetUrl);
+            if (openMasterSheetBtn) openMasterSheetBtn.href = masterSheetUrl;
+            alert("✅ Cloud Webhook and Master Spreadsheet links saved successfully!");
             if (url) fetchRemoteCloudNominations();
         });
     }
 
+    // OFFLINE OUTBOX QUEUE & AUTO-RETRY SYNC ENGINE
+    let pendingOutbox = JSON.parse(localStorage.getItem("ecms_soar_outbox_queue")) || [];
+
+    function saveOutboxQueue() {
+        localStorage.setItem("ecms_soar_outbox_queue", JSON.stringify(pendingOutbox));
+    }
+
     function syncNominationToCloud(nominationObj) {
         if (!cloudWebhookUrl) return;
-        try {
-            fetch(cloudWebhookUrl, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify(nominationObj)
-            }).catch(err => console.log("Cloud sync note:", err));
-        } catch(e) {
-            console.log("Cloud sync error:", e);
+        if (!pendingOutbox.some(item => item.id === nominationObj.id)) {
+            pendingOutbox.push(nominationObj);
+            saveOutboxQueue();
         }
+        processOutboxQueue();
+    }
+
+    function processOutboxQueue() {
+        if (!cloudWebhookUrl || pendingOutbox.length === 0) return;
+
+        const itemToSync = pendingOutbox[0];
+        fetch(cloudWebhookUrl, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify(itemToSync)
+        }).then(() => {
+            pendingOutbox.shift();
+            saveOutboxQueue();
+            if (pendingOutbox.length > 0) {
+                setTimeout(processOutboxQueue, 500);
+            }
+        }).catch(err => {
+            console.log("Wi-Fi offline or sync pending; will retry automatically when reconnected.");
+        });
     }
 
     function fetchRemoteCloudNominations() {
@@ -2297,6 +2358,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }).catch(e => console.log("Cloud fetch note:", e));
     }
+
+    window.addEventListener("online", () => {
+        processOutboxQueue();
+        fetchRemoteCloudNominations();
+    });
+
+    // Auto-poll cloud backend every 30 seconds on active Dean sessions
+    setInterval(() => {
+        if (isDeanAuthenticated && cloudWebhookUrl) {
+            fetchRemoteCloudNominations();
+        }
+        processOutboxQueue();
+    }, 30000);
 
     function mergeNominationsList(newItems) {
         let addedCount = 0;
