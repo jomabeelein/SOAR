@@ -760,6 +760,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             nominations.unshift(newNomination);
             saveState();
+            syncNominationToCloud(newNomination);
 
             if (typeof confetti === "function" && analysis.score === "High") {
                 confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
@@ -808,6 +809,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             nominations.unshift(newNom);
             saveState();
+            syncNominationToCloud(newNom);
             if (typeof confetti === "function") confetti({ particleCount: 50, origin: { y: 0.6 } });
             alert(`⚡ Quick nomination submitted for ${studentName}!`);
             quickAddForm.reset();
@@ -2230,4 +2232,140 @@ document.addEventListener("DOMContentLoaded", () => {
     if (matrixLangBtn) matrixLangBtn.addEventListener("click", () => langToggleBtn && langToggleBtn.click());
 
     renderMatrixTable();
+
+    // CLOUD SYNC & DATA RECOVERY ENGINE
+    const cloudSyncModal = document.getElementById("cloudSyncModal");
+    const cloudSyncBtn = document.getElementById("cloudSyncBtn");
+    const importJsonBtn = document.getElementById("importJsonBtn");
+    const closeCloudSyncModalBtn = document.getElementById("closeCloudSyncModalBtn");
+    const closeCloudSyncFooterBtn = document.getElementById("closeCloudSyncFooterBtn");
+    const cloudWebhookUrlInput = document.getElementById("cloudWebhookUrlInput");
+    const saveCloudSyncBtn = document.getElementById("saveCloudSyncBtn");
+    const executeJsonImportBtn = document.getElementById("executeJsonImportBtn");
+    const importJsonFileInput = document.getElementById("importJsonFileInput");
+    const importJsonTextInput = document.getElementById("importJsonTextInput");
+    const exportDeviceNominationsBtn = document.getElementById("exportDeviceNominationsBtn");
+
+    let cloudWebhookUrl = localStorage.getItem("ecms_soar_cloud_webhook") || "";
+    if (cloudWebhookUrlInput) cloudWebhookUrlInput.value = cloudWebhookUrl;
+
+    function openCloudSyncModal() {
+        if (cloudSyncModal) cloudSyncModal.classList.add("open");
+    }
+    function closeCloudSyncModal() {
+        if (cloudSyncModal) cloudSyncModal.classList.remove("open");
+    }
+
+    if (cloudSyncBtn) cloudSyncBtn.addEventListener("click", openCloudSyncModal);
+    if (importJsonBtn) importJsonBtn.addEventListener("click", openCloudSyncModal);
+    if (closeCloudSyncModalBtn) closeCloudSyncModalBtn.addEventListener("click", closeCloudSyncModal);
+    if (closeCloudSyncFooterBtn) closeCloudSyncFooterBtn.addEventListener("click", closeCloudSyncModal);
+
+    if (saveCloudSyncBtn) {
+        saveCloudSyncBtn.addEventListener("click", () => {
+            const url = cloudWebhookUrlInput.value.trim();
+            cloudWebhookUrl = url;
+            localStorage.setItem("ecms_soar_cloud_webhook", url);
+            alert(url ? "✅ Cloud Webhook URL saved! Submissions will now sync live to your cloud endpoint." : "Cloud Webhook disabled.");
+            if (url) fetchRemoteCloudNominations();
+        });
+    }
+
+    function syncNominationToCloud(nominationObj) {
+        if (!cloudWebhookUrl) return;
+        try {
+            fetch(cloudWebhookUrl, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(nominationObj)
+            }).catch(err => console.log("Cloud sync note:", err));
+        } catch(e) {
+            console.log("Cloud sync error:", e);
+        }
+    }
+
+    function fetchRemoteCloudNominations() {
+        if (!cloudWebhookUrl) return;
+        fetch(cloudWebhookUrl)
+            .then(res => res.json())
+            .then(remoteItems => {
+                if (Array.isArray(remoteItems)) {
+                    mergeNominationsList(remoteItems);
+                }
+            }).catch(e => console.log("Cloud fetch error:", e));
+    }
+
+    function mergeNominationsList(newItems) {
+        let addedCount = 0;
+        newItems.forEach(item => {
+            if (!item.id || !item.studentName) return;
+            const exists = nominations.some(n => n.id === item.id || (n.studentName === item.studentName && n.reason === item.reason));
+            if (!exists) {
+                nominations.unshift(item);
+                addedCount++;
+            }
+        });
+        if (addedCount > 0) {
+            saveState();
+            renderModerationQueue();
+            renderSotmLeaderboard();
+            renderSlideDeck();
+            renderTicketsGrid();
+        }
+        return addedCount;
+    }
+
+    if (executeJsonImportBtn) {
+        executeJsonImportBtn.addEventListener("click", () => {
+            const jsonText = importJsonTextInput ? importJsonTextInput.value.trim() : "";
+            const file = importJsonFileInput && importJsonFileInput.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        const items = Array.isArray(parsed) ? parsed : (parsed.nominations || [parsed]);
+                        const added = mergeNominationsList(items);
+                        alert(`🎉 Successfully imported and merged ${added} nominations from file!`);
+                        if (importJsonTextInput) importJsonTextInput.value = "";
+                        importJsonFileInput.value = "";
+                        closeCloudSyncModal();
+                    } catch(err) {
+                        alert("❌ Invalid JSON file format. Please check your backup file.");
+                    }
+                };
+                reader.readAsText(file);
+            } else if (jsonText) {
+                try {
+                    const parsed = JSON.parse(jsonText);
+                    const items = Array.isArray(parsed) ? parsed : (parsed.nominations || [parsed]);
+                    const added = mergeNominationsList(items);
+                    alert(`🎉 Successfully imported and merged ${added} nominations!`);
+                    if (importJsonTextInput) importJsonTextInput.value = "";
+                    closeCloudSyncModal();
+                } catch(err) {
+                    alert("❌ Invalid JSON text format. Please paste valid nomination JSON.");
+                }
+            } else {
+                alert("Please select a JSON file or paste JSON code to import.");
+            }
+        });
+    }
+
+    if (exportDeviceNominationsBtn) {
+        exportDeviceNominationsBtn.addEventListener("click", () => {
+            const jsonStr = JSON.stringify(nominations, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `ECMS_Device_Nominations_${new Date().toISOString().split("T")[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+    }
+
+    if (cloudWebhookUrl) fetchRemoteCloudNominations();
 });

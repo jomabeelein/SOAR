@@ -551,7 +551,13 @@
                             🔒 Lock Session
                         </button>
                         <button id="changePasscodeBtn" class="btn btn-ghost">
-                            🔑 Change Passcode
+                            🔑 Passcode
+                        </button>
+                        <button id="cloudSyncBtn" class="btn btn-ghost" style="border-color:#0D9488; color:#0D9488;">
+                            ☁️ Cloud Sync & Recover
+                        </button>
+                        <button id="importJsonBtn" class="btn btn-ghost">
+                            📥 Import Backup
                         </button>
                         <button id="batchApproveBtn" class="btn btn-secondary">
                             ✅ Approve Selected
@@ -1014,5 +1020,49 @@
 
     <script src="soar-matrix-data.js"></script>
     <script src="app.js"></script>
+    <!-- Modal for Cloud Sync & Data Recovery -->
+    <div id="cloudSyncModal" class="modal-backdrop">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">
+                <h3>☁️ Cloud Sync & Data Recovery Center</h3>
+                <button class="modal-close" id="closeCloudSyncModalBtn">&times;</button>
+            </div>
+            <div class="modal-body" style="display:flex; flex-direction:column; gap:1.25rem;">
+                
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; padding:1rem; border-radius:8px; font-size:0.85rem; color:#1E40AF;">
+                    ℹ️ <strong>Why did nominations stay on student/teacher devices?</strong><br>
+                    Web applications save local data per browser. If students or teachers entered nominations on their laptops/Chromebooks yesterday, those entries are stored inside those devices. Use the options below to sync live or import yesterday's saved data!
+                </div>
+
+                <div style="border-top:1px solid #E2E8F0; padding-top:1rem;">
+                    <h4 style="font-size:0.95rem; color:#0F172A; margin-bottom:0.5rem;">Option 1: Live Cloud Webhook Sync (Google Sheets / API Endpoint)</h4>
+                    <p style="font-size:0.8rem; color:#64748B; margin-bottom:0.75rem;">Enter a Google Apps Script Webhook URL or Cloud API endpoint to auto-sync all nominations live from any device to your Dean screen:</p>
+                    <input type="url" id="cloudWebhookUrlInput" placeholder="https://script.google.com/macros/s/... (Google Sheet Webhook URL)" class="input-styled" style="font-size:0.85rem;">
+                    <div style="display:flex; gap:0.5rem; margin-top:0.5rem;">
+                        <button id="saveCloudSyncBtn" class="btn btn-primary btn-sm">💾 Save Cloud Endpoint & Sync Live</button>
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid #E2E8F0; padding-top:1rem;">
+                    <h4 style="font-size:0.95rem; color:#0F172A; margin-bottom:0.5rem;">Option 2: Recover Yesterday's Submissions (Import File or Paste JSON)</h4>
+                    <p style="font-size:0.8rem; color:#64748B; margin-bottom:0.75rem;">Select a `.json` backup file exported from a teacher's device, or paste nomination JSON code below:</p>
+                    
+                    <div style="display:flex; gap:0.75rem; align-items:center; margin-bottom:0.75rem;">
+                        <input type="file" id="importJsonFileInput" accept=".json" style="font-size:0.85rem;">
+                    </div>
+
+                    <textarea id="importJsonTextInput" rows="4" placeholder="Or paste JSON code here..." class="textarea-styled" style="font-size:0.8rem; font-family:monospace;"></textarea>
+                    
+                    <button id="executeJsonImportBtn" class="btn btn-secondary btn-sm" style="margin-top:0.5rem;">
+                        📥 Import & Merge Nominations Now
+                    </button>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button id="closeCloudSyncFooterBtn" class="btn btn-ghost">Close</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
