@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
 </head>
 <body>
 
@@ -1070,8 +1070,6 @@
     <!-- Printable Container -->
     <div id="printContainer" class="print-only"></div>
 
-    <script src="soar-matrix-data.js"></script>
-    <script src="app.js"></script>
     <!-- Modal for Cloud Sync & Data Recovery -->
     <div id="cloudSyncModal" class="modal-backdrop">
         <div class="modal-content" style="max-width:650px;">
@@ -1121,5 +1119,14 @@
             </div>
         </div>
     </div>
+
+    <!-- Footer with Self-Healing Recovery Link -->
+    <footer style="text-align:center; padding: 2rem 1rem; color: #94A3B8; font-size: 0.8rem;">
+        East Central Middle School • S.O.A.R. Student Recognition • 
+        <a href="javascript:void(0)" onclick="if(confirm('Reset local device cache & reload site? This will unfreeze the page if your browser stored corrupted data.')){ localStorage.clear(); sessionStorage.clear(); location.reload(); }" style="color:#94A3B8; text-decoration:underline;">Troubleshoot / Reset Device Cache</a>
+    </footer>
+
+    <script src="soar-matrix-data.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>

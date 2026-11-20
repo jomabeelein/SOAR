@@ -1,12 +1,58 @@
 // East Central MS S.O.A.R. System Application Logic
 document.addEventListener("DOMContentLoaded", () => {
     
+    // SAFE STORAGE HELPERS (Guards against corrupted storage or private browsing errors)
+    function safeGetJson(key, fallback) {
+        try {
+            const val = localStorage.getItem(key);
+            if (!val || val === "undefined" || val === "null") return fallback;
+            const parsed = JSON.parse(val);
+            return (parsed !== null && parsed !== undefined) ? parsed : fallback;
+        } catch(e) {
+            console.warn("Storage read fallback for " + key, e);
+            return fallback;
+        }
+    }
+
+    function safeSetItem(key, val) {
+        try {
+            localStorage.setItem(key, typeof val === "string" ? val : JSON.stringify(val));
+        } catch(e) {
+            console.warn("Storage write error for " + key, e);
+        }
+    }
+
     // State Management
     let currentLang = "en";
-    let rawNominations = JSON.parse(localStorage.getItem("ecms_soar_nominations")) || INITIAL_NOMINATIONS;
+    const DEFAULT_MATRIX = {
+        title: "East Central MS S.O.A.R. Matrix",
+        subtitle: "S.O.A.R. in all locations",
+        locations: ["Classroom", "Hallway", "Cafeteria", "Bathroom", "Office", "Stairwell", "Assemblies", "Technology"],
+        pillars: [
+            { code: "S", name: "S is for Show respect", shortName: "Show Respect", color: "#DC143C", items: { Classroom: ["Use classroom materials correctly", "Remain on task and complete work", "Follow directions"], Hallway: ["Go to your destination quickly and quietly", "Be on time", "Voice level 0 or 1"], Cafeteria: ["Get utensils before sitting down", "Use appropriate voice levels"], Bathroom: ["Throw trash away", "Flush toilet", "Wash hands"], Office: ["Use an office pass when going and leaving the office"], Stairwell: ["Use the right side when walking up and down stairwell", "Always use the handrail", "Voice level 0 or 1"], Assemblies: ["Be a good listener", "Be on time"], Technology: ["Remain on task when using technology", "Store headphones properly"] } },
+            { code: "O", name: "O is for Own your learning and behavior", shortName: "Own Your Learning & Behavior", color: "#FFB703", items: { Classroom: ["Be prepared for class", "Do your personal best", "Ask questions and seek help when needed"], Hallway: ["Go directly to your destination", "Walk at all times", "Keep hands, feet, and objects to yourself"], Cafeteria: ["Be polite, saying 'please' and 'thank you'", "Follow adult directions the first time"], Bathroom: ["Only use bathroom when needed", "Give others privacy"], Office: ["Be polite, saying 'please' and 'thank you'"], Stairwell: ["Be aware of your surroundings", "Keep eyes forward at all times"], Assemblies: ["Line up quickly", "Participate in the assembly"], Technology: ["Be prepared to learn new technological activities/tasks", "Use technology for academic use only"] } },
+            { code: "A", name: "A is for Act with Integrity", shortName: "Act with Integrity", color: "#2A9D8F", items: { Classroom: ["Listen to and follow directions", "Help others", "Be kind to others", "Participate appropriately"], Hallway: ["Keep hallways clean", "Always use a pass"], Cafeteria: ["Clean up trash and area", "Use Voice Level 1 or 0"], Bathroom: ["Return to class right away", "Use a bathroom pass"], Office: ["Complete tasks or errands quickly and return to class"], Stairwell: ["Follow hallway expectations"], Assemblies: ["Sit with advisory"], Technology: ["Academic integrity on device"] } },
+            { code: "R", name: "R is for Rise above conflict", shortName: "Rise Above Conflict", color: "#457B9D", items: { Classroom: ["Seek adult help when needed", "Respect differences", "Ignore minor distractions"], Hallway: ["Walk away from disagreements", "Report conflicts to staff"], Cafeteria: ["Invite peers sitting alone to join table", "Avoid drama"], Bathroom: ["Respect peers' personal space", "Report facility concerns"], Office: ["Communicate calmly and patiently with office staff"], Stairwell: ["Keep moving calmly even if crowded"], Assemblies: ["Demonstrate patience and courtesy"], Technology: ["Engage in positive digital citizenship"] } }
+        ]
+    };
+
+    function getActiveMatrix() {
+        if (typeof SOAR_MATRIX !== "undefined" && SOAR_MATRIX) {
+            return SOAR_MATRIX[currentLang] || SOAR_MATRIX.en || DEFAULT_MATRIX;
+        }
+        return DEFAULT_MATRIX;
+    }
+
+    const FALLBACK_NOMINATIONS = (typeof INITIAL_NOMINATIONS !== "undefined" && Array.isArray(INITIAL_NOMINATIONS)) ? INITIAL_NOMINATIONS : [
+        { id: "nom-101", studentName: "Elena Rodriguez", grade: "7th Grade", nominatorName: "Mr. Davis (Math)", nominatorRole: "Teacher / Staff", pillar: "O", pillarName: "Own Your Learning & Behavior", location: "Classroom", reason: "Demonstrated ownership & persistence in mathematics.", alignmentScore: "High", status: "Approved", adminNote: "Approved example", date: "2026-08-01", language: "en" },
+        { id: "nom-102", studentName: "Jayden Carter", grade: "6th Grade", nominatorName: "Coach Rivera", nominatorRole: "Teacher / Staff", pillar: "R", pillarName: "Rise Above Conflict", location: "Cafeteria", reason: "De-escalated tension in cafeteria gracefully.", alignmentScore: "High", status: "Approved", adminNote: "Approved example", date: "2026-08-02", language: "en" }
+    ];
+
+    let rawNominations = safeGetJson("ecms_soar_nominations", FALLBACK_NOMINATIONS);
+    if (!Array.isArray(rawNominations)) rawNominations = FALLBACK_NOMINATIONS;
     // Clear out rejected nominations and keep approved/pending nominations
-    let nominations = rawNominations.filter(n => n.status !== "Rejected");
-    localStorage.setItem("ecms_soar_nominations", JSON.stringify(nominations));
+    let nominations = rawNominations.filter(n => n && typeof n === "object" && n.status !== "Rejected");
+    safeSetItem("ecms_soar_nominations", nominations);
     let storedPasscode = localStorage.getItem("ecms_soar_dean_passcode") || "SOAR2026";
     let storedTeacherPasscode = localStorage.getItem("ecms_soar_teacher_passcode") || "CARDINALS";
 
@@ -21,18 +67,23 @@ document.addEventListener("DOMContentLoaded", () => {
         { id: "idea-4", studentName: "Sam Smith", grade: "6th Grade", title: "Principal for a Period", cost: "25 SOAR Bucks VIP", reason: "Shadow the Principal, make morning announcements, and sit in the executive office chair!", status: "Approved", date: "2026-08-04" }
     ];
 
-    let storedIdeas = JSON.parse(localStorage.getItem("ecms_soar_reward_ideas")) || [];
+    let storedIdeas = safeGetJson("ecms_soar_reward_ideas", []);
+    if (!Array.isArray(storedIdeas)) storedIdeas = [];
     // Ensure all default ideas exist
     DEFAULT_REWARD_IDEAS.forEach(defIdea => {
-        if (!storedIdeas.some(i => i.title.toLowerCase() === defIdea.title.toLowerCase())) {
+        if (!storedIdeas.some(i => i && i.title && i.title.toLowerCase() === defIdea.title.toLowerCase())) {
             storedIdeas.push(defIdea);
         }
     });
     let rewardIdeas = storedIdeas.length > 0 ? storedIdeas : DEFAULT_REWARD_IDEAS;
-    localStorage.setItem("ecms_soar_reward_ideas", JSON.stringify(rewardIdeas));
+    safeSetItem("ecms_soar_reward_ideas", rewardIdeas);
 
-    let isDeanAuthenticated = sessionStorage.getItem("ecms_soar_is_dean") === "true";
-    let isTeacherAuthenticated = sessionStorage.getItem("ecms_soar_is_teacher") === "true";
+    let isDeanAuthenticated = false;
+    let isTeacherAuthenticated = false;
+    try {
+        isDeanAuthenticated = sessionStorage.getItem("ecms_soar_is_dean") === "true";
+        isTeacherAuthenticated = sessionStorage.getItem("ecms_soar_is_teacher") === "true";
+    } catch(e) {}
 
     let activeSlideIndex = 0;
     let autoPlayInterval = null;
@@ -50,14 +101,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // Student of the Month Filter State
     let sotmSelectedGrade = "all";
     let sotmSelectedMode = "month"; // "month", "quarter", "semester", "year"
-    let awardedSotmStudents = JSON.parse(localStorage.getItem("ecms_soar_sotm_awarded")) || {};
+    let awardedSotmStudents = safeGetJson("ecms_soar_sotm_awarded", {});
+    if (typeof awardedSotmStudents !== "object" || awardedSotmStudents === null) awardedSotmStudents = {};
 
     function saveState() {
-        localStorage.setItem("ecms_soar_nominations", JSON.stringify(nominations));
-        localStorage.setItem("ecms_soar_sotm_awarded", JSON.stringify(awardedSotmStudents));
-        localStorage.setItem("ecms_soar_reward_ideas", JSON.stringify(rewardIdeas));
-        updatePendingBadge();
-        renderApprovedRewardStore();
+        safeSetItem("ecms_soar_nominations", nominations);
+        safeSetItem("ecms_soar_sotm_awarded", awardedSotmStudents);
+        safeSetItem("ecms_soar_reward_ideas", rewardIdeas);
+        try { updatePendingBadge(); } catch(e) {}
+        try { renderApprovedRewardStore(); } catch(e) {}
     }
 
     // Header Lock Status Button Guard
@@ -73,12 +125,12 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isDeanAuthenticated) {
             if (adminLockScreen) adminLockScreen.style.display = "none";
             if (adminMainContent) adminMainContent.className = "protected-content-visible";
-            renderAnalytics();
-            renderSlideDeck();
-            renderTicketsGrid();
-            renderParentCenter();
-            renderSotmLeaderboard();
-            renderRewardIdeasQueue();
+            try { renderAnalytics(); } catch(e) { console.warn("Analytics render warning:", e); }
+            try { renderSlideDeck(); } catch(e) { console.warn("SlideDeck render warning:", e); }
+            try { renderTicketsGrid(); } catch(e) { console.warn("Tickets render warning:", e); }
+            try { renderParentCenter(); } catch(e) { console.warn("ParentCenter render warning:", e); }
+            try { renderSotmLeaderboard(); } catch(e) { console.warn("SOTM render warning:", e); }
+            try { renderRewardIdeasQueue(); } catch(e) { console.warn("RewardIdeas render warning:", e); }
         } else {
             if (adminLockScreen) adminLockScreen.style.display = "block";
             if (adminMainContent) adminMainContent.className = "protected-content-hidden";
@@ -88,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isTeacherAuthenticated) {
             if (teacherLockScreen) teacherLockScreen.style.display = "none";
             if (teacherMainContent) teacherMainContent.className = "protected-content-visible";
-            renderQuickSkillChips();
+            try { renderQuickSkillChips(); } catch(e) { console.warn("QuickSkills render warning:", e); }
         } else {
             if (teacherLockScreen) teacherLockScreen.style.display = "block";
             if (teacherMainContent) teacherMainContent.className = "protected-content-hidden";
@@ -223,10 +275,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const targetPanel = document.getElementById(targetTab);
             if (targetPanel) targetPanel.classList.add("active");
 
-            if (targetTab === "tab-admin" && isDeanAuthenticated) renderModerationQueue();
-            if (targetTab === "tab-teacher" && isTeacherAuthenticated) renderQuickSkillChips();
-            if (targetTab === "tab-matrix") renderMatrixTable();
-            if (targetTab === "tab-store") renderApprovedRewardStore();
+            try {
+                if (targetTab === "tab-admin" && isDeanAuthenticated) renderModerationQueue();
+                if (targetTab === "tab-teacher" && isTeacherAuthenticated) renderQuickSkillChips();
+                if (targetTab === "tab-matrix") renderMatrixTable();
+                if (targetTab === "tab-store") renderApprovedRewardStore();
+            } catch(renderErr) {
+                console.warn("Sub-tab renderer warning:", renderErr);
+            }
         });
     });
 
@@ -524,7 +580,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!soarPillarsInteractiveGrid) return;
         soarPillarsInteractiveGrid.innerHTML = "";
 
-        const matrixData = SOAR_MATRIX[currentLang] || SOAR_MATRIX.en;
+        const matrixData = getActiveMatrix();
         const locTitle = currentLang === "es" ? `Expectativas S.O.A.R. en ${getSpanishLocation(location)}` : `📍 ${location} S.O.A.R. Expectations`;
         if (interactiveLocationTitle) interactiveLocationTitle.textContent = locTitle;
 
@@ -618,7 +674,7 @@ document.addEventListener("DOMContentLoaded", () => {
         quickSkillChipsGrid.innerHTML = "";
 
         const loc = quickLocation ? quickLocation.value : "Classroom";
-        const matrixData = SOAR_MATRIX[currentLang] || SOAR_MATRIX.en;
+        const matrixData = getActiveMatrix();
 
         matrixData.pillars.forEach(pillarObj => {
             const pillarBox = document.createElement("div");
@@ -996,8 +1052,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const masterProfiles = {};
         nominations.forEach(n => {
-            if (n.id === currentNomId) return;
-            const norm = n.studentName.toLowerCase().trim();
+            if (!n || n.id === currentNomId || !n.studentName) return;
+            const norm = String(n.studentName).toLowerCase().trim();
             if (!masterProfiles[norm]) {
                 masterProfiles[norm] = {
                     masterName: n.studentName,
@@ -1163,9 +1219,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 (currentAdminFilter === "Needs Revision" ? (nom.status === "Needs Revision" || nom.alignmentScore === "Low") : nom.status === currentAdminFilter);
             
             const matchesQuery = !query || 
-                nom.studentName.toLowerCase().includes(query) ||
-                nom.nominatorName.toLowerCase().includes(query) ||
-                nom.reason.toLowerCase().includes(query);
+                (nom.studentName && String(nom.studentName).toLowerCase().includes(query)) ||
+                (nom.nominatorName && String(nom.nominatorName).toLowerCase().includes(query)) ||
+                (nom.reason && String(nom.reason).toLowerCase().includes(query));
 
             return matchesFilter && matchesQuery;
         });
@@ -1451,14 +1507,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const studentAgg = {};
         nominations.forEach(nom => {
+            if (!nom || !nom.studentName) return;
             if (!isNominationInTimeframe(nom.date)) return;
             if (sotmSelectedGrade !== "all" && nom.grade !== sotmSelectedGrade) return;
 
-            const nameKey = nom.studentName.toLowerCase().trim();
+            const nameKey = String(nom.studentName).toLowerCase().trim();
+            if (!nameKey) return;
             if (!studentAgg[nameKey]) {
                 studentAgg[nameKey] = {
                     studentName: nom.studentName,
-                    grade: nom.grade,
+                    grade: nom.grade || "All Grades",
                     totalCount: 0,
                     approvedCount: 0,
                     pillars: { S: 0, O: 0, A: 0, R: 0 },
@@ -1472,12 +1530,12 @@ document.addEventListener("DOMContentLoaded", () => {
             if (nom.pillar && studentAgg[nameKey].pillars[nom.pillar] !== undefined) {
                 studentAgg[nameKey].pillars[nom.pillar]++;
             }
-            studentAgg[nameKey].nominators.add(nom.nominatorName);
+            if (nom.nominatorName) studentAgg[nameKey].nominators.add(nom.nominatorName);
             studentAgg[nameKey].stories.push({
-                nominator: nom.nominatorName,
-                pillar: nom.pillar,
-                reason: nom.reason,
-                date: nom.date
+                nominator: nom.nominatorName || "Staff Member",
+                pillar: nom.pillar || "S",
+                reason: nom.reason || "",
+                date: nom.date || ""
             });
         });
 
@@ -1501,7 +1559,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         sortedStudents.slice(0, 10).forEach((st, idx) => {
             const rank = idx + 1;
-            const isAwarded = !!awardedSotmStudents[st.studentName.toLowerCase().trim()];
+            const isAwarded = !!(st.studentName && awardedSotmStudents[String(st.studentName).toLowerCase().trim()]);
             const isFavoritedCapAlert = st.totalCount >= 4;
 
             const card = document.createElement("div");
@@ -1560,7 +1618,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.toggleAwardSotm = function(studentName, grade) {
         if (!isDeanAuthenticated) return;
-        const key = studentName.toLowerCase().trim();
+        const key = String(studentName || "").toLowerCase().trim();
         if (awardedSotmStudents[key]) {
             delete awardedSotmStudents[key];
         } else {
@@ -1584,7 +1642,7 @@ document.addEventListener("DOMContentLoaded", () => {
             monthLabel = d.toLocaleDateString(lang === "es" ? "es-US" : "en-US", { month: "long", year: "numeric" });
         }
 
-        const currentStudentNoms = nominations.filter(n => n.studentName.toLowerCase().trim() === studentName.toLowerCase().trim());
+        const currentStudentNoms = nominations.filter(n => n && n.studentName && String(n.studentName).toLowerCase().trim() === String(studentName || "").toLowerCase().trim());
         const sampleReason = currentStudentNoms.length > 0 ? currentStudentNoms[0].reason : "Consistently upholding S.O.A.R. core values across East Central MS campus.";
 
         let html = "";
@@ -2160,8 +2218,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!isDeanAuthenticated) return;
 
         const total = nominations.length;
-        const approved = nominations.filter(n => n.status === "Approved").length;
-        const uniqueStudents = new Set(nominations.map(n => n.studentName.toLowerCase().trim())).size;
+        const approved = nominations.filter(n => n && n.status === "Approved").length;
+        const uniqueStudents = new Set(nominations.filter(n => n && n.studentName).map(n => String(n.studentName).toLowerCase().trim())).size;
         const approvalRate = total ? Math.round((approved / total) * 100) : 0;
 
         const kpiTotal = document.getElementById("kpiTotal");
@@ -2176,7 +2234,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const staffCounts = {};
         nominations.forEach(n => {
-            if (n.nominatorName && n.nominatorRole.includes("Teacher")) {
+            if (n && n.nominatorName && typeof n.nominatorRole === "string" && n.nominatorRole.includes("Teacher")) {
                 staffCounts[n.nominatorName] = (staffCounts[n.nominatorName] || 0) + 1;
             }
         });
@@ -2240,7 +2298,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const table = document.getElementById("soarMatrixTable");
         if (!table) return;
 
-        const data = SOAR_MATRIX[currentLang] || SOAR_MATRIX.en;
+        const data = getActiveMatrix();
         const matrixTitle = document.getElementById("matrixTitle");
         const matrixSubtitle = document.getElementById("matrixSubtitle");
 
